@@ -26,11 +26,13 @@ import android.graphics.PixelFormat
 import android.graphics.Point
 import android.os.Build
 import android.os.IBinder
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams
+import android.widget.FrameLayout
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.round
@@ -39,11 +41,13 @@ import androidx.core.app.ServiceCompat
 import com.shezik.drawanywhere.view.DismissTargetView
 import com.shezik.drawanywhere.view.ToolbarLifecycleOwner
 import com.shezik.drawanywhere.view.canvas.NativeDrawCanvasView
+import com.shezik.drawanywhere.view.canvas.TextEditLayer
 import com.shezik.drawanywhere.view.toolbar.DrawToolbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -59,6 +63,9 @@ class MainService : Service() {
     private lateinit var drawController: DrawController
     private lateinit var windowManager: WindowManager
     private lateinit var canvasView: NativeDrawCanvasView
+    /** Overlay window content: the drawing canvas plus the text edit box on top. */
+    private lateinit var canvasContainer: FrameLayout
+    private lateinit var textEditLayer: TextEditLayer
     private lateinit var toolbarView: ComposeView
     private lateinit var dismissTargetView: DismissTargetView
     private lateinit var preferencesManager: PreferencesManager
@@ -89,9 +96,19 @@ class MainService : Service() {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
         )
 
+        viewModel.textScale = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_SP, 1f, resources.displayMetrics
+        )
+
         // -------- Setup native canvas --------
         canvasView = NativeDrawCanvasView(this, drawController, viewModel)
         drawController.onStrokesChanged = { canvasView.invalidate() }
+        canvasContainer = FrameLayout(this)
+        canvasContainer.addView(
+            canvasView,
+            FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+        )
+        textEditLayer = TextEditLayer(this, canvasContainer, viewModel)
 
         val canvasParams = LayoutParams(
             LayoutParams.MATCH_PARENT,
@@ -101,8 +118,12 @@ class MainService : Service() {
                     LayoutParams.FLAG_NOT_TOUCH_MODAL or
                     LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
-        )
-        applyCanvasPassthrough(canvasParams, initialUiState.canvasPassthrough)
+        ).apply {
+            // The keyboard must not resize or pan the full-screen canvas
+            softInputMode = LayoutParams.SOFT_INPUT_ADJUST_NOTHING or
+                    LayoutParams.SOFT_INPUT_STATE_UNCHANGED
+        }
+        applyCanvasFlags(canvasParams, initialUiState.canvasPassthrough, editing = false)
 
         // -------- Setup toolbar (Compose) --------
         toolbarLifecycleOwner.start()
@@ -141,7 +162,7 @@ class MainService : Service() {
         dismissTargetView.visibility = View.GONE
         // --------------------------------------------------------------------
 
-        windowManager.addView(canvasView, canvasParams)
+        windowManager.addView(canvasContainer, canvasParams)
         windowManager.addView(toolbarView, toolbarParams)
         windowManager.addView(dismissTargetView, dismissParams)
 
@@ -154,10 +175,26 @@ class MainService : Service() {
         // Observe UI state changes
         serviceScope.launch {
             viewModel.uiState.collect { state ->
-                applyCanvasPassthrough(canvasParams, state.canvasPassthrough)
-                windowManager.updateViewLayout(canvasView, canvasParams)
-                canvasView.visibility = if (state.canvasVisible) View.VISIBLE else View.GONE
+                applyCanvasFlags(canvasParams, state.canvasPassthrough, viewModel.textEdit.value != null)
+                windowManager.updateViewLayout(canvasContainer, canvasParams)
+                canvasContainer.visibility = if (state.canvasVisible) View.VISIBLE else View.GONE
             }
+        }
+
+        // Text tool: show the edit box and make the window focusable only while typing,
+        // so that keyboard input reaches us; afterwards touches/keys go to the app below again.
+        serviceScope.launch {
+            combine(viewModel.textEdit, viewModel.viewport) { edit, vp -> edit to vp }
+                .collect { (edit, vp) ->
+                    val wasEditing = textEditLayer.isEditing
+                    textEditLayer.bind(edit, vp)
+                    val editing = edit != null
+                    if (editing != wasEditing) {
+                        applyCanvasFlags(canvasParams, viewModel.uiState.value.canvasPassthrough, editing)
+                        windowManager.updateViewLayout(canvasContainer, canvasParams)
+                        if (editing) canvasContainer.post { textEditLayer.requestKeyboard() }
+                    }
+                }
         }
 
         // Observe service state changes
@@ -190,11 +227,14 @@ class MainService : Service() {
         isRunning = true
     }
 
-    private fun applyCanvasPassthrough(params: LayoutParams, passthrough: Boolean) {
-        params.flags = if (passthrough)
-            params.flags or LayoutParams.FLAG_NOT_TOUCHABLE
-        else
-            params.flags and LayoutParams.FLAG_NOT_TOUCHABLE.inv()
+    private fun applyCanvasFlags(params: LayoutParams, passthrough: Boolean, editing: Boolean) {
+        var flags = params.flags
+        flags = if (passthrough) flags or LayoutParams.FLAG_NOT_TOUCHABLE
+                else flags and LayoutParams.FLAG_NOT_TOUCHABLE.inv()
+        // Focusable only while a text box is being edited
+        flags = if (editing) flags and LayoutParams.FLAG_NOT_FOCUSABLE.inv()
+                else flags or LayoutParams.FLAG_NOT_FOCUSABLE
+        params.flags = flags
     }
 
     private fun applyToolbarPosition(params: LayoutParams, state: ServiceState) {
@@ -226,8 +266,8 @@ class MainService : Service() {
         serviceScope.cancel()
         if (::toolbarView.isInitialized && toolbarView.isAttachedToWindow)
             windowManager.removeView(toolbarView)
-        if (::canvasView.isInitialized && canvasView.isAttachedToWindow)
-            windowManager.removeView(canvasView)
+        if (::canvasContainer.isInitialized && canvasContainer.isAttachedToWindow)
+            windowManager.removeView(canvasContainer)
         if (::dismissTargetView.isInitialized && dismissTargetView.isAttachedToWindow)
             windowManager.removeView(dismissTargetView)
         toolbarLifecycleOwner.stop()

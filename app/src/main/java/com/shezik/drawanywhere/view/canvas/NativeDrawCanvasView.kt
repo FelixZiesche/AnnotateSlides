@@ -19,12 +19,14 @@ package com.shezik.drawanywhere.view.canvas
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
 import com.shezik.drawanywhere.DrawController
 import com.shezik.drawanywhere.DrawViewModel
+import com.shezik.drawanywhere.model.PenType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -67,7 +69,20 @@ class NativeDrawCanvasView(
         onThreeFingerDoubleTap = { viewModel.toggleCanvasPassthrough() },
         onThreeFingerTripleTap = { viewModel.setCanvasVisibility(false) },
         fingerDrawingEnabled = { viewModel.uiState.value.fingerDrawingEnabled },
+        textToolActive = { viewModel.uiState.value.currentPenType == PenType.Text },
     )
+
+    // ── Text boxes ────────────────────────────────────────────────
+
+    private val textRenderer = TextBoxRenderer()
+
+    init {
+        viewModel.textHitTest = { point ->
+            val tolerance = 8f * context.resources.displayMetrics.density / viewModel.viewport.value.zoom
+            textRenderer.hitTest(drawController.textList, point, tolerance)
+        }
+        viewModel.onTextDeleted = { performHapticFeedback(HapticFeedbackConstants.LONG_PRESS) }
+    }
 
     override fun onTouchEvent(event: MotionEvent): Boolean =
         touchHandler.handleEvent(event)
@@ -125,10 +140,20 @@ class NativeDrawCanvasView(
         for (stroke in drawController.strokeList) {
             stroke.render(canvas, pathPaint)
         }
+
+        // Text boxes on top of strokes; the one being edited is shown by the edit box instead
+        val editingId = viewModel.textEdit.value?.original?.id
+        val texts = drawController.textList
+        for (item in texts) {
+            if (item.id != editingId) textRenderer.draw(canvas, item)
+        }
+        textRenderer.trim(texts)
         canvas.restore()
 
         // ── Hover size preview (screen space, constant border) ────
-        touchHandler.hoverState?.let { state ->
+        touchHandler.hoverState?.takeIf {
+            viewModel.uiState.value.currentPenType != PenType.Text
+        }?.let { state ->
             val config = viewModel.uiState.value.currentPenConfig
 
             val alpha = if (state.isFading) {
@@ -202,6 +227,7 @@ class NativeDrawCanvasView(
         viewportScope = CoroutineScope(Dispatchers.Main).apply {
             launch { viewModel.viewport.collect { invalidate() } }
             launch { viewModel.lockMode.collect { invalidate() } }
+            launch { viewModel.textEdit.collect { invalidate() } }
         }
     }
 

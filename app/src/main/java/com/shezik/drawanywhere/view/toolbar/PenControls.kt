@@ -91,3 +91,41 @@ fun SliderControl(
         )
     }
 }
+
+/** Controls shown instead of [PenControls] while the text tool is selected. */
+@Composable
+fun TextControls(
+    penConfig: PenConfig,
+    textBackground: Boolean,
+    onTextSizeChange: (Float) -> Unit,
+    onAlphaChange: (Float) -> Unit,
+    onTextBackgroundChange: (Boolean) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
+        Text(
+            text = stringResource(R.string.text_tool),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        SliderControl(
+            label = stringResource(R.string.text_size),
+            value = penConfig.width.coerceIn(com.shezik.drawanywhere.TEXT_SIZE_RANGE_SP),
+            valueRange = com.shezik.drawanywhere.TEXT_SIZE_RANGE_SP,
+            onValueChange = onTextSizeChange,
+            valueDisplay = { "${it.toInt()} sp" },
+        )
+        SliderControl(
+            label = stringResource(R.string.opacity),
+            value = penConfig.alpha,
+            valueRange = 0.1f..1f,
+            onValueChange = onAlphaChange,
+            valueDisplay = { "${(it * 100).toInt()}%" },
+        )
+        CheckboxControl(
+            label = stringResource(R.string.text_background),
+            isChecked = textBackground,
+            onCheckedChange = onTextBackgroundChange
+        )
+    }
+}

@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -16,7 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.shezik.drawanywhere.R
 import com.shezik.drawanywhere.UiState
 import com.shezik.drawanywhere.model.PenType
@@ -50,6 +53,8 @@ internal data class ToolbarButton(
     val onClick: (() -> Unit)? = null,
     val popupPages: List<@Composable () -> Unit> = emptyList(),
     val iconContent: (@Composable () -> Unit)? = null,
+    /** Highlight the button (e.g. the active text tool). */
+    val isSelected: Boolean = false,
 ) {
     val hasPopup: Boolean
         get() = popupPages.isNotEmpty()
@@ -71,6 +76,8 @@ internal fun createAllToolbarButtons(
     onPresetColorChange: (Color) -> Unit = onColorChange,
     onStrokeWidthChange: (Float) -> Unit,
     onAlphaChange: (Float) -> Unit,
+    onToggleTextTool: () -> Unit,
+    onTextBackgroundChange: (Boolean) -> Unit,
     onChangeOrientation: (ToolbarOrientation) -> Unit,
     onChangeAutoClearCanvas: (Boolean) -> Unit,
     onChangeVisibleOnStart: (Boolean) -> Unit,
@@ -106,8 +113,35 @@ internal fun createAllToolbarButtons(
         contentDescription = stringResource(R.string.tool_controls),
         popupPages = listOf(
             { PenTypeSelector(currentPenType = uiState.currentPenType, onPenTypeSwitch = onPenTypeSwitch) },
-            { PenControls(penConfig = uiState.currentPenConfig, onStrokeWidthChange = onStrokeWidthChange, onAlphaChange = onAlphaChange, alphaEnabled = !uiState.currentPenType.isEraser) }
+            {
+                if (uiState.currentPenType == PenType.Text) TextControls(
+                    penConfig = uiState.currentPenConfig,
+                    textBackground = uiState.textBackground,
+                    onTextSizeChange = onStrokeWidthChange,
+                    onAlphaChange = onAlphaChange,
+                    onTextBackgroundChange = onTextBackgroundChange,
+                )
+                else PenControls(penConfig = uiState.currentPenConfig, onStrokeWidthChange = onStrokeWidthChange, onAlphaChange = onAlphaChange, alphaEnabled = !uiState.currentPenType.isEraser)
+            }
         )
+    ),
+    ToolbarButton(
+        id = "text_tool",
+        icon = Icons.Default.TextFields,
+        contentDescription = stringResource(R.string.text_tool),
+        isEnabled = uiState.canvasVisible,
+        isSelected = uiState.currentPenType == PenType.Text,
+        onClick = onToggleTextTool,
+        iconContent = {
+            val selected = uiState.currentPenType == PenType.Text
+            Text(
+                text = "T",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = if (uiState.canvasVisible) 1f else 0.4f)
+            )
+        }
     ),
     ToolbarButton(
         id = "color_picker",

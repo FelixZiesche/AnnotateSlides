@@ -81,7 +81,11 @@ internal fun AnimatedToolbarButton(modifier: Modifier, button: ToolbarButton) {
         enabled = button.isEnabled,
         modifier = modifier
             .graphicsLayer { scaleX = scale; scaleY = scale }
-            .background(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), shape = CircleShape)
+            .background(
+                color = if (button.isSelected) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                shape = CircleShape
+            )
     ) {
         button.iconContent?.invoke()
             ?: Icon(

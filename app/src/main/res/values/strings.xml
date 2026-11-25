@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DrawAnywhere</string>
+    <string name="app_name">Annotate Slides</string>
     <string name="permission_required">Permission Required</string>
     <string name="overlay_permission_description">This application needs overlay permission to place the canvas on top of other apps.</string>
     <string name="permission_accept">Proceed</string>
@@ -40,4 +40,10 @@
     <string name="unlock_all">Unlock all</string>
     <string name="copyright">© 2025–2026 shezik, licensed under AGPLv3 or any later version.</string>
     <string name="licenses" >App icon by Solar Icons, licensed under CC BY 4.0.</string>
+    <string name="text_tool">Text</string>
+    <string name="text_size">Font size</string>
+    <string name="text_background">White background</string>
+    <string name="text_done">Done</string>
+    <string name="text_delete">Delete text</string>
+    <string name="fork_notice">Annotate Slides is a modified version of DrawAnywhere (github.com/DrawAnywhere/DrawAnywhere). Text tool © 2026 FelixZiesche. Source: github.com/FelixZiesche/AnnotateSlides</string>
 </resources>

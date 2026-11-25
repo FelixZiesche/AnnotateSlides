@@ -58,6 +58,8 @@ fun DrawToolbar(
         onPresetColorChange = viewModel::setPresetColor,
         onStrokeWidthChange = viewModel::setStrokeWidth,
         onAlphaChange = viewModel::setStrokeAlpha,
+        onToggleTextTool = viewModel::toggleTextTool,
+        onTextBackgroundChange = viewModel::setTextBackground,
         onChangeOrientation = viewModel::setToolbarOrientation,
         onChangeAutoClearCanvas = viewModel::setAutoClearCanvas,
         onChangeVisibleOnStart = viewModel::setVisibleOnStart,

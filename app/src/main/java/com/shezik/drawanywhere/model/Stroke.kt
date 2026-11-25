@@ -34,7 +34,15 @@ data class Stroke(
 sealed class DrawAction {
     data class AddStroke(val stroke: Stroke) : DrawAction()
     data class EraseStroke(val stroke: Stroke) : DrawAction()
-    data class ClearStrokes(val strokes: List<Stroke>) : DrawAction()
+    data class ClearStrokes(
+        val strokes: List<Stroke>,
+        val texts: List<TextItem> = emptyList(),
+    ) : DrawAction()
+    /**
+     * Text box change: add (before = null), delete (after = null),
+     * or edit/move/restyle (both set, same id).
+     */
+    data class TextChange(val before: TextItem?, val after: TextItem?) : DrawAction()
     data class CanvasSnapshot(val before: List<Stroke>, val after: List<Stroke>) : DrawAction()
 
     /** Returns this action with ephemeral strokes removed, or null if nothing remains. */
@@ -43,8 +51,11 @@ sealed class DrawAction {
         is EraseStroke -> if (stroke.penType.isEphemeral) null else this
         is ClearStrokes -> {
             val f = strokes.filter { !it.penType.isEphemeral }
-            if (f.isEmpty()) null else copy(strokes = f)
+            if (f.isEmpty() && texts.isEmpty()) null
+            else if (f.size == strokes.size) this
+            else copy(strokes = f)
         }
+        is TextChange -> if (before == null && after == null) null else this
         is CanvasSnapshot -> {
             val b = before.filter { !it.penType.isEphemeral }
             val a = after.filter { !it.penType.isEphemeral }

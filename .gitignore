@@ -33,3 +33,6 @@ google-services.json
 *.hprof
 /app/release
 /app/debug
+*.p12
+*.pfx
+signing/

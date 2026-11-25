@@ -23,6 +23,7 @@ import androidx.lifecycle.viewModelScope
 import com.shezik.drawanywhere.model.PenConfig
 import com.shezik.drawanywhere.model.PenType
 import com.shezik.drawanywhere.model.StrokeModifier
+import com.shezik.drawanywhere.model.TextItem
 import com.shezik.drawanywhere.view.canvas.CanvasViewport
 import com.shezik.drawanywhere.view.canvas.LockMode
 import com.shezik.drawanywhere.view.toolbar.ToolbarOrientation
@@ -50,6 +51,8 @@ data class UiState(
     val visibleOnStart: Boolean = true,
     val fingerDrawingEnabled: Boolean = true,
     val recentColors: List<Color> = emptyList(),
+    /** Semi-transparent white box behind new/edited text boxes. */
+    val textBackground: Boolean = false,
 
     val currentPenType: PenType = PenType.Pen,
     val penConfigs: Map<PenType, PenConfig> = defaultPenConfigs(),
@@ -59,7 +62,7 @@ data class UiState(
     val secondDrawerOpen: Boolean = false,
 
     val firstDrawerButtons: Set<String> = setOf(
-        "undo", "clear", "tool_controls", "color_picker", "zoom_lock"
+        "undo", "clear", "tool_controls", "text_tool", "color_picker", "zoom_lock"
     ),
     val secondDrawerButtons: Set<String> = setOf(
         "passthrough", "redo", "settings"
@@ -70,8 +73,17 @@ data class UiState(
         get() = penConfigs[currentPenType] ?: PenConfig()
 }
 
+/** Default text size in sp (readable on a projector). */
+const val DEFAULT_TEXT_SIZE_SP = 28f
+val TEXT_SIZE_RANGE_SP = 12f..96f
+
+/** A text box currently being typed into. [original] is null for a new box. */
+data class TextEditState(val original: TextItem?, val draft: TextItem)
+
 fun defaultPenConfigs(): Map<PenType, PenConfig> = PenType.entries.associateWith { type ->
-    if (type.isEraser) {
+    if (type == PenType.Text) {
+        PenConfig(penType = type, width = DEFAULT_TEXT_SIZE_SP)
+    } else if (type.isEraser) {
         val w = if (type == PenType.StrokeEraser) 50f else 30f
         PenConfig(penType = type, width = w, color = Color.LightGray)
     } else {
@@ -92,6 +104,8 @@ class DrawViewModel(
         const val TOOLBAR_DIM_DELAY_MS = 3_000L
         const val TOOLBAR_DIM_ALPHA = 0.5f
         const val TOOLBAR_DIM_DURATION_MS = 300L
+        const val TEXT_LONG_PRESS_MS = 600L
+        private const val TEXT_DRAG_SLOP_DP = 8f
     }
     private val _uiState = MutableStateFlow(initialUiState)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -112,6 +126,21 @@ class DrawViewModel(
     val canRedo: StateFlow<Boolean> = controller.canRedo
     val canClearCanvas: StateFlow<Boolean> = controller.canClearStrokes
 
+    // ── Text tool state ──────────────────────────────────────────
+
+    private val _textEdit = MutableStateFlow<TextEditState?>(null)
+    /** Non-null while a text box is being edited; the overlay window must be focusable then. */
+    val textEdit: StateFlow<TextEditState?> = _textEdit.asStateFlow()
+
+    /** Returns the topmost text box at a world point; installed by the canvas view. */
+    var textHitTest: (Offset) -> TextItem? = { null }
+
+    /** Pixels per sp (and per dp) on this screen; installed by the service. */
+    var textScale: Float = 1f
+
+    /** Called after a text box was deleted by long press (for haptic feedback). */
+    var onTextDeleted: (() -> Unit)? = null
+
     init {
 
         _uiState
@@ -127,7 +156,15 @@ class DrawViewModel(
         dimmingJob?.cancel()
     }
 
+    private var lastDrawingPenType: PenType = PenType.Pen
+
     fun switchToPen(type: PenType) {
+        if (type != PenType.Text) {
+            cancelTextGesture()
+            finishTextEditing()
+        }
+        val current = uiState.value.currentPenType
+        if (current != PenType.Text && type == PenType.Text) lastDrawingPenType = current
         _uiState.update { it.copy(currentPenType = type) }
         controller.setPenConfig(uiState.value.currentPenConfig)
     }
@@ -143,8 +180,19 @@ class DrawViewModel(
     private var previousPenType: PenType? = null
     private var isStrokeDown: Boolean = false
 
+    /** "T" toolbar button: toggle between the text tool and the last drawing tool. */
+    fun toggleTextTool() {
+        if (uiState.value.currentPenType == PenType.Text) switchToPen(lastDrawingPenType)
+        else switchToPen(PenType.Text)
+    }
+
     fun startStroke(point: Offset, modifier: StrokeModifier) {
         finishStroke()
+
+        if (modifier == StrokeModifier.None && uiState.value.currentPenType == PenType.Text) {
+            beginTextGesture(point)
+            return
+        }
 
         val newPenType = resolvePenType(modifier)
         if (newPenType != uiState.value.currentPenType) {
@@ -157,11 +205,13 @@ class DrawViewModel(
     }
 
     fun updateStroke(point: Offset) {
+        textGesture?.let { moveTextGesture(it, point); return }
         if (!isStrokeDown) return
         controller.updateLatestStroke(point)
     }
 
     fun finishStroke() {
+        textGesture?.let { endTextGesture(it); return }
         if (!isStrokeDown) return
 
         controller.finishStroke()
@@ -177,6 +227,8 @@ class DrawViewModel(
         setCanvasVisibility(!uiState.value.canvasVisible)
 
     fun setCanvasVisibility(visible: Boolean) {
+        cancelTextGesture()
+        finishTextEditing()
         var currentPassthrough = uiState.value.canvasPassthrough
         var currentPinned = uiState.value.secondDrawerPinnedButtons
 
@@ -199,6 +251,10 @@ class DrawViewModel(
         setCanvasPassthrough(!uiState.value.canvasPassthrough)
 
     fun setCanvasPassthrough(passthrough: Boolean) {
+        if (passthrough) {
+            cancelTextGesture()
+            finishTextEditing()
+        }
         val newPinned = getPinSecondDrawerButtonResult("passthrough", passthrough)
         _uiState.update { it.copy(canvasPassthrough = passthrough, secondDrawerPinnedButtons = newPinned) }
     }
@@ -229,6 +285,12 @@ class DrawViewModel(
             state.copy(penConfigs = configs)
         }
         controller.setPenConfig(uiState.value.currentPenConfig)
+        if (uiState.value.currentPenType == PenType.Text) applyTextStyleToDraft()
+    }
+
+    fun setTextBackground(enabled: Boolean) {
+        _uiState.update { it.copy(textBackground = enabled) }
+        _textEdit.update { st -> st?.copy(draft = st.draft.copy(background = enabled)) }
     }
 
     fun setToolbarPosition(position: Offset) =
@@ -241,9 +303,159 @@ class DrawViewModel(
         preferencesManager.saveServiceState(serviceState.value)
     }
 
-    fun clearCanvas() = controller.clearStrokes()
-    fun undo() = controller.undo()
-    fun redo() = controller.redo()
+    fun clearCanvas() {
+        cancelTextGesture()
+        _textEdit.value = null  // discard the box being typed, everything is cleared anyway
+        controller.clearStrokes()
+    }
+
+    fun undo() {
+        cancelTextGesture()
+        val wasEditing = textEdit.value != null
+        // Commit the typing session first so that undo reverts exactly it.
+        // If nothing was typed, the press only leaves typing mode.
+        if (!finishTextEditing() && wasEditing) return
+        controller.undo()
+    }
+
+    fun redo() {
+        cancelTextGesture()
+        finishTextEditing()
+        controller.redo()
+    }
+
+    // ── Text tool ────────────────────────────────────────────────
+
+    private class TextGesture(val down: Offset, val hit: TextItem?) {
+        var moved = false
+        var consumed = false
+        var last: Offset = down
+    }
+
+    private var textGesture: TextGesture? = null
+    private var longPressJob: Job? = null
+
+    private fun currentZoom(): Float = viewport.value.zoom.takeIf { it > 0f } ?: 1f
+
+    private fun textSizeWorld(sp: Float): Float = sp * textScale / currentZoom()
+
+    private fun beginTextGesture(point: Offset) {
+        val editingId = textEdit.value?.draft?.id
+        val hit = textHitTest(point)?.takeIf { it.id != editingId }
+        val gesture = TextGesture(point, hit)
+        textGesture = gesture
+        longPressJob?.cancel()
+        if (hit != null) {
+            longPressJob = viewModelScope.launch {
+                delay(TEXT_LONG_PRESS_MS)
+                if (textGesture === gesture && !gesture.moved) {
+                    gesture.consumed = true
+                    controller.commitTextChange(hit, null)
+                    onTextDeleted?.invoke()
+                }
+            }
+        }
+    }
+
+    private fun moveTextGesture(g: TextGesture, point: Offset) {
+        if (g.consumed) return
+        g.last = point
+        if (!g.moved) {
+            val slop = TEXT_DRAG_SLOP_DP * textScale / currentZoom()
+            if ((point - g.down).getDistance() <= slop) return
+            g.moved = true
+            longPressJob?.cancel()
+        }
+        g.hit?.let { hit ->
+            controller.previewText(hit.copy(x = hit.x + point.x - g.down.x, y = hit.y + point.y - g.down.y))
+        }
+    }
+
+    private fun endTextGesture(g: TextGesture) {
+        longPressJob?.cancel()
+        textGesture = null
+        if (g.consumed) return
+        val hit = g.hit
+        if (g.moved) {
+            if (hit != null) controller.commitTextChange(hit, controller.findText(hit.id))
+            return
+        }
+        // Tap
+        when {
+            hit != null -> {
+                finishTextEditing()
+                // The hit box may have been replaced meanwhile; edit its latest version
+                val latest = controller.findText(hit.id) ?: return
+                _textEdit.value = TextEditState(original = latest, draft = latest)
+            }
+            textEdit.value != null -> finishTextEditing()
+            else -> startNewText(g.down)
+        }
+    }
+
+    /** Abort a running touch gesture on a text box (e.g. a second finger came down). */
+    fun cancelTextGesture() {
+        val g = textGesture ?: return
+        longPressJob?.cancel()
+        textGesture = null
+        if (g.moved && !g.consumed) g.hit?.let { controller.previewText(it) }
+    }
+
+    private fun startNewText(point: Offset) {
+        val cfg = uiState.value.penConfigs[PenType.Text] ?: PenConfig(PenType.Text, width = DEFAULT_TEXT_SIZE_SP)
+        val size = textSizeWorld(cfg.width)
+        val pad = size * TextItem.PADDING_FACTOR
+        val draft = TextItem(
+            id = TextItem.newId(),
+            text = "",
+            x = point.x - pad,
+            y = point.y - pad - size * 0.6f,
+            textSize = size,
+            color = cfg.color,
+            alpha = cfg.alpha,
+            background = uiState.value.textBackground,
+        )
+        _textEdit.value = TextEditState(original = null, draft = draft)
+    }
+
+    private fun applyTextStyleToDraft() {
+        val cfg = uiState.value.currentPenConfig
+        _textEdit.update { st ->
+            st?.copy(draft = st.draft.copy(
+                textSize = textSizeWorld(cfg.width),
+                color = cfg.color,
+                alpha = cfg.alpha,
+            ))
+        }
+    }
+
+    /** Text typed into the edit box changed. */
+    fun updateEditingText(text: String) {
+        _textEdit.update { st -> if (st == null || st.draft.text == text) st else st.copy(draft = st.draft.copy(text = text)) }
+    }
+
+    /**
+     * Commit the box being edited (one undo step) and leave typing mode.
+     * An empty box is discarded (or deleted, if it existed before).
+     * @return true if this recorded an undo step.
+     */
+    fun finishTextEditing(): Boolean {
+        val st = _textEdit.value ?: return false
+        _textEdit.value = null
+        val draft = st.draft.copy(text = st.draft.text.trimEnd())
+        return if (draft.text.isBlank()) {
+            st.original != null && controller.commitTextChange(st.original, null)
+        } else {
+            controller.commitTextChange(st.original, draft)
+        }
+    }
+
+    /** Trash button next to the edit box. */
+    fun deleteEditingText() {
+        val st = _textEdit.value ?: return
+        _textEdit.value = null
+        if (st.original != null) controller.commitTextChange(st.original, null)
+    }
 
     private var dimmingJob: Job? = null
 
@@ -352,6 +564,7 @@ class DrawViewModel(
     }
 
     fun quitApplication(savePosition: Boolean = true) {
+        finishTextEditing()
         viewModelScope.launch {
             preferencesManager.saveUiState(uiState.value)
             if (savePosition) preferencesManager.saveServiceState(serviceState.value)

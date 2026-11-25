@@ -13,3 +13,10 @@ interface StrokeTool {
     fun onMove(point: Offset)
     fun onFinish()
 }
+
+/** Tool that does nothing; used by pen types that do not draw strokes (e.g. text). */
+object NoOpTool : StrokeTool {
+    override fun onStart(point: Offset) {}
+    override fun onMove(point: Offset) {}
+    override fun onFinish() {}
+}

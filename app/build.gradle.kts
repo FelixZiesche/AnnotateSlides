@@ -1,5 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
+// Release builds get their version from the git tag (see .github/workflows/release.yml):
+//   ./gradlew assembleRelease -PappVersionName=1.2.3 -PappVersionCode=10203
+val appVersionName = (findProperty("appVersionName") as String?) ?: "1.0.0-dev"
+val appVersionCode = (findProperty("appVersionCode") as String?)?.toInt() ?: 1
+
+// Release signing comes from environment variables (GitHub secrets), never from the repo.
+val releaseKeystorePath: String? = System.getenv("ANNOTATE_KEYSTORE_PATH")
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -10,17 +18,30 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.shezik.drawanywhere"
+        applicationId = "de.ziesche.annotateslides"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "2.3"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseKeystorePath != null) {
+            create("release") {
+                storeFile = file(releaseKeystorePath)
+                storePassword = System.getenv("ANNOTATE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANNOTATE_KEY_ALIAS") ?: "annotateslides"
+                keyPassword = System.getenv("ANNOTATE_KEY_PASSWORD")
+                    ?: System.getenv("ANNOTATE_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (releaseKeystorePath != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

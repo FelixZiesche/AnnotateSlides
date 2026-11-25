@@ -72,6 +72,8 @@ class CanvasTouchHandler(
     threeFingerDoubleTapDelayMs: Long = TapGestureDetector.TAP_INTERVAL_MS,
     // Finger drawing toggle: checked on every DOWN to support runtime changes
     private val fingerDrawingEnabled: () -> Boolean = { true },
+    // Text tool: fingers start immediately (no debounce) and work even when finger drawing is off
+    private val textToolActive: () -> Boolean = { false },
 ) {
 
     // ═══════════════════════════════════════════════════════════════
@@ -278,6 +280,7 @@ class CanvasTouchHandler(
         }
         tapDetector.onMultiTouchEnter(event.pointerCount, event.eventTime, idToPos)
         discardPendingStroke()
+        viewModel.cancelTextGesture()
         cancelAnyStroke()
         isMultiTouch = true
 
@@ -318,7 +321,7 @@ class CanvasTouchHandler(
         pendingModifier = detectStrokeModifier(event)
         val worldPt = vp.screenToWorld(Offset(event.x, event.y))
 
-        if (isStylus) {
+        if (isStylus || textToolActive()) {
             Log.d(TAG, "  → stylus DOWN: stroke started (ptr=#$activePointerId, mod=$pendingModifier)")
             viewModel.startStroke(worldPt, pendingModifier)
             strokeInProgress = true

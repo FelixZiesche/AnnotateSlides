@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DrawAnywhere</string>
+    <string name="app_name">Annotate Slides</string>
     <string name="permission_required">需要权限</string>
     <string name="overlay_permission_description">此应用需要悬浮窗权限来将画布放置在其他应用上。</string>
     <string name="permission_accept">继续</string>
@@ -41,4 +41,10 @@
     <string name="unlock_all">解锁全部</string>
     <string name="copyright">© 2025–2026 shezik, 采用 AGPLv3 协议或其更高版本授权。</string>
     <string name="licenses">应用图标来自 Solar Icons, 采用 CC BY 4.0 协议授权。</string>
+    <string name="text_tool">文字</string>
+    <string name="text_size">字号</string>
+    <string name="text_background">白色背景</string>
+    <string name="text_done">完成</string>
+    <string name="text_delete">删除文字</string>
+    <string name="fork_notice">Annotate Slides 是 DrawAnywhere (github.com/DrawAnywhere/DrawAnywhere) 的修改版本。文字工具 © 2026 FelixZiesche。源代码：github.com/FelixZiesche/AnnotateSlides</string>
 </resources>
