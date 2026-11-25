@@ -98,7 +98,17 @@ fun DrawToolbar(
                     modifier = Modifier.padding(Spacing.sm),
                     uiState = uiState,
                     allButtonsMap = allButtonsMap,
-                    onExpandToggleClick = viewModel::toggleSecondDrawer
+                    onExpandToggleClick = viewModel::toggleSecondDrawer,
+                    dragHandle = {
+                        ToolbarDragHandle(
+                            haptics = haptics,
+                            onPositionChange = viewModel::updateToolbarPosition,
+                            onPositionSaved = viewModel::saveToolbarPosition,
+                            onDragStart = viewModel::onDismissDragStart,
+                            onDragPosition = viewModel::onDismissDragMove,
+                            onDragEnd = viewModel::onDismissDragEnd,
+                        )
+                    }
                 )
             }
         }
@@ -110,7 +120,8 @@ internal fun ToolbarButtonsContainer(
     modifier: Modifier = Modifier,
     uiState: com.shezik.drawanywhere.UiState,
     allButtonsMap: Map<String, ToolbarButton>,
-    onExpandToggleClick: () -> Unit
+    onExpandToggleClick: () -> Unit,
+    dragHandle: (@Composable () -> Unit)? = null,
 ) {
     val orientation = uiState.toolbarOrientation
     val isFirstDrawerOpen = uiState.firstDrawerOpen
@@ -138,6 +149,7 @@ internal fun ToolbarButtonsContainer(
 
     @Composable
     fun ToolbarContent() {
+        dragHandle?.invoke()
         standaloneButtonIds.forEach { id -> allButtonsMap[id]?.let { RenderButton(it, popupAlignment) } }
         firstDrawerButtonIds.forEach { id ->
             allButtonsMap[id]?.let { btn ->

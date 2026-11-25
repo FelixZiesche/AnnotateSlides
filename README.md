@@ -17,6 +17,10 @@ through a mirrored projector.
 - Text works with undo/redo and "clear canvas", and stays when the canvas is hidden or switched to
   pass-through (for turning slides).
 
+## Toolbar
+
+Drag the grip (⋮⋮) at the start of the toolbar to move it anywhere on the screen. Its position is remembered.
+
 ## Slides (pages)
 
 The ◀ 1 ▶ buttons in the toolbar switch between slide pages. Every page has its own drawings,
