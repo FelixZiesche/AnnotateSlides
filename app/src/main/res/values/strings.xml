@@ -51,4 +51,10 @@
     <string name="accessibility_service_label">Annotate Slides: automatic slides</string>
     <string name="accessibility_service_description">Lets Annotate Slides notice arrow keys, Page Up/Down and presenter clickers so that every slide gets its own annotation page automatically. Keys are passed on unchanged; screen content is not read.</string>
     <string name="auto_page_turn_setup">Tap to enable the accessibility service</string>
+    <string name="setup_title">Automatic slide pages</string>
+    <string name="setup_step1">1. Accessibility → Downloaded apps → Annotate Slides: try to switch on (it gets blocked once).</string>
+    <string name="setup_step2">2. App info → ⋮ (top right) → \"Allow restricted settings\". Wait for the countdown and confirm.</string>
+    <string name="setup_step3">3. Switch on the accessibility service again.</string>
+    <string name="setup_open_accessibility">Open accessibility</string>
+    <string name="setup_open_app_info">Open app info</string>
 </resources>

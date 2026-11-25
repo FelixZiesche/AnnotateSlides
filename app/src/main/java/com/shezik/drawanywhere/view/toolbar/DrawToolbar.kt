@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -22,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import android.content.Intent
+import android.net.Uri
 import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
 import com.shezik.drawanywhere.DrawViewModel
@@ -76,6 +79,14 @@ fun DrawToolbar(
         onCycleLockMode = viewModel::cycleLockMode,
         lockMode = lockMode,
         pageIndex = pageIndex,
+        onOpenAppInfo = {
+            runCatching {
+                context.startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            }
+        },
         onOpenAccessibilitySettings = {
             runCatching {
                 context.startActivity(
@@ -107,8 +118,9 @@ fun DrawToolbar(
                 onDragPosition = viewModel::onDismissDragMove,
                 onDragEnd = viewModel::onDismissDragEnd,
             ) {
+                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
                 ToolbarButtonsContainer(
-                    modifier = Modifier.padding(Spacing.sm),
+                    modifier = Modifier.padding(Spacing.xs),
                     uiState = uiState,
                     allButtonsMap = allButtonsMap,
                     onExpandToggleClick = viewModel::toggleSecondDrawer,
@@ -123,6 +135,7 @@ fun DrawToolbar(
                         )
                     }
                 )
+                }
             }
         }
     }
@@ -146,7 +159,7 @@ internal fun ToolbarButtonsContainer(
     val standaloneButtonIds = allButtonsMap.keys.filter {
         it !in firstDrawerButtonIds && it !in secondDrawerButtonIds
     }
-    val arrangement = Arrangement.spacedBy(Spacing.sm)
+    val arrangement = Arrangement.spacedBy(Spacing.xs)
     val popupAlignment = when (orientation) {
         ToolbarOrientation.HORIZONTAL -> Alignment.TopCenter
         ToolbarOrientation.VERTICAL -> Alignment.CenterEnd

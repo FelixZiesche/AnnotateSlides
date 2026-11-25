@@ -52,7 +52,7 @@ data class UiState(
     val fingerDrawingEnabled: Boolean = true,
     val recentColors: List<Color> = emptyList(),
     /** Semi-transparent white box behind new/edited text boxes. */
-    val textBackground: Boolean = false,
+    val textBackground: Boolean = true,
 
     val currentPenType: PenType = PenType.Pen,
     val penConfigs: Map<PenType, PenConfig> = defaultPenConfigs(),
@@ -61,11 +61,12 @@ data class UiState(
     val firstDrawerOpen: Boolean = canvasVisible,
     val secondDrawerOpen: Boolean = false,
 
+    // Main row: what is needed while presenting. "More" drawer: rarely used.
     val firstDrawerButtons: Set<String> = setOf(
-        "undo", "clear", "tool_controls", "text_tool", "color_picker", "zoom_lock"
+        "text_tool", "tool_controls", "color_picker", "undo", "clear", "passthrough"
     ),
     val secondDrawerButtons: Set<String> = setOf(
-        "passthrough", "redo", "settings"
+        "redo", "zoom_lock", "settings"
     ),
     val secondDrawerPinnedButtons: Set<String> = emptySet()
 ) {

@@ -51,4 +51,10 @@
     <string name="accessibility_service_label">Annotate Slides: Folien automatisch</string>
     <string name="accessibility_service_description">Erlaubt Annotate Slides, Pfeiltasten, Bild auf/ab und Presenter zu bemerken, damit jede Folie automatisch eine eigene Notizseite bekommt. Die Tasten werden unverändert weitergegeben, der Bildschirminhalt wird nicht gelesen.</string>
     <string name="auto_page_turn_setup">Tippen, um die Bedienungshilfe einzuschalten</string>
+    <string name="setup_title">Folien automatisch wechseln</string>
+    <string name="setup_step1">1. Bedienungshilfen → Heruntergeladene Apps → Annotate Slides: einschalten versuchen (wird einmal blockiert).</string>
+    <string name="setup_step2">2. App-Info → ⋮ (oben rechts) → „Eingeschränkte Einstellungen zulassen“. Countdown abwarten und bestätigen.</string>
+    <string name="setup_step3">3. Bedienungshilfe erneut einschalten.</string>
+    <string name="setup_open_accessibility">Bedienungshilfen öffnen</string>
+    <string name="setup_open_app_info">App-Info öffnen</string>
 </resources>

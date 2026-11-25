@@ -19,7 +19,9 @@ through a mirrored projector.
 
 ## Toolbar
 
-Drag the grip (⋮⋮) at the start of the toolbar to move it anywhere on the screen. Its position is remembered.
+From left to right: grip (⋮⋮, drag to move the toolbar anywhere), show/hide canvas, slide page,
+then **T** (text), tools, colour, undo, clear, pass-through. The arrow opens the "more" drawer with
+redo, zoom lock and settings. Active modes (text tool, pass-through) are highlighted.
 
 ## Slides (pages)
 
@@ -35,10 +37,13 @@ Swipes on the screen are not detected; PowerPoint animation steps on the same ke
 
 ### Enabling the accessibility service on Xiaomi HyperOS
 
+The red "!" in the toolbar opens these steps with shortcut buttons.
+
 1. Settings → Additional settings → Accessibility → Downloaded apps → Annotate Slides → try to switch it on
    (Android blocks it once — this step is needed so the next option appears).
-2. Settings → Apps → Manage apps → Annotate Slides → ⋮ (top right) → "Allow restricted settings".
-   HyperOS then shows a security warning with a countdown: wait until it ends, tick the box and confirm.
+2. Open the app's **App info** page (long-press the app icon → ⓘ, or the "Open app info" button in the
+   "!" popup) → ⋮ (top right) → "Allow restricted settings". Wait for the countdown and confirm.
+   On HyperOS the Xiaomi "Manage apps" page may not show this menu; use the standard App info page.
 3. Repeat step 1.
 
 If step 2 is impossible, use a computer with ADB (USB debugging on):

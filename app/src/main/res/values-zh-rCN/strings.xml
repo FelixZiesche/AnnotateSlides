@@ -52,4 +52,10 @@
     <string name="accessibility_service_label">Annotate Slides：自动翻页</string>
     <string name="accessibility_service_description">允许 Annotate Slides 检测方向键、翻页键和翻页笔，使每张幻灯片自动拥有独立的批注页。按键会原样传递，不读取屏幕内容。</string>
     <string name="auto_page_turn_setup">点按以启用无障碍服务</string>
+    <string name="setup_title">自动切换幻灯片页</string>
+    <string name="setup_step1">1. 无障碍 → 已下载的应用 → Annotate Slides：尝试开启（会被拦截一次）。</string>
+    <string name="setup_step2">2. 应用信息 → ⋮（右上角）→“允许受限制的设置”。等待倒计时后确认。</string>
+    <string name="setup_step3">3. 再次开启无障碍服务。</string>
+    <string name="setup_open_accessibility">打开无障碍设置</string>
+    <string name="setup_open_app_info">打开应用信息</string>
 </resources>

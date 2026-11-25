@@ -178,3 +178,40 @@ internal fun CheckboxControl(
         )
     }
 }
+
+/** Shown from the red "!" while the automatic page-turn service is not enabled. */
+@Composable
+internal fun AutoPageSetup(
+    onOpenAppInfo: () -> Unit,
+    onOpenAccessibilitySettings: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        Text(
+            text = stringResource(R.string.setup_title),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        listOf(R.string.setup_step1, R.string.setup_step2, R.string.setup_step3).forEach { res ->
+            Text(
+                text = stringResource(res),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        Button(
+            onClick = onOpenAccessibilitySettings,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(Spacing.sm)
+        ) { Text(stringResource(R.string.setup_open_accessibility), style = MaterialTheme.typography.bodySmall) }
+        Button(
+            onClick = onOpenAppInfo,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ),
+            shape = RoundedCornerShape(Spacing.sm)
+        ) { Text(stringResource(R.string.setup_open_app_info), style = MaterialTheme.typography.bodySmall) }
+    }
+}

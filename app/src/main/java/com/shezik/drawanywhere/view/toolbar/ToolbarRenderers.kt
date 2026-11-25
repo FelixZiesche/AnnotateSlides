@@ -15,6 +15,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
@@ -23,6 +25,9 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.shezik.drawanywhere.R
 import com.shezik.drawanywhere.ui.theme.Spacing
+
+/** Compact toolbar buttons (Material default is 48dp). */
+internal val TOOLBAR_BUTTON_SIZE = 40.dp
 
 @Composable
 internal fun RenderButton(button: ToolbarButton, popupAlignment: Alignment, modifier: Modifier = Modifier) {
@@ -52,6 +57,7 @@ internal fun ToolbarExpandButton(
     IconButton(
         onClick = onClick,
         modifier = modifier
+            .size(TOOLBAR_BUTTON_SIZE)
             .background(
                 color = if (isExpanded) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
@@ -80,6 +86,7 @@ internal fun AnimatedToolbarButton(modifier: Modifier, button: ToolbarButton) {
         onClick = button.onClick ?: {},
         enabled = button.isEnabled,
         modifier = modifier
+            .size(TOOLBAR_BUTTON_SIZE)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .background(
                 color = if (button.isSelected) MaterialTheme.colorScheme.primaryContainer
@@ -108,8 +115,8 @@ internal fun PopupToolbarButton(
         IconButton(
             onClick = { isPopupOpen = !isPopupOpen },
             enabled = button.isEnabled,
-            modifier = Modifier.background(
-                color = if (isPopupOpen) MaterialTheme.colorScheme.primaryContainer
+            modifier = Modifier.size(TOOLBAR_BUTTON_SIZE).background(
+                color = if (isPopupOpen || button.isSelected) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
                 shape = CircleShape
             )
@@ -135,6 +142,8 @@ internal fun PopupToolbarButton(
                 onDismissRequest = { isPopupOpen = false },
                 properties = PopupProperties(focusable = true)
             ) {
+                // The toolbar itself is compact; popups keep normal touch target sizes
+                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 48.dp) {
                 Card(
                     modifier = Modifier.wrapContentSize().width(200.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -172,6 +181,7 @@ internal fun PopupToolbarButton(
                             }
                         }
                     }
+                }
                 }
             }
         }

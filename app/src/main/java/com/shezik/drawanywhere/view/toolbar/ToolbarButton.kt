@@ -87,6 +87,7 @@ internal fun createAllToolbarButtons(
     onCycleLockMode: () -> Unit,
     pageIndex: Int,
     onOpenAccessibilitySettings: () -> Unit,
+    onOpenAppInfo: () -> Unit,
     lockMode: LockMode,
     onQuitApplication: () -> Unit
 ): List<ToolbarButton> = listOf(
@@ -103,7 +104,10 @@ internal fun createAllToolbarButtons(
         icon = Icons.Default.Slideshow,
         contentDescription = if (autoPageTurnServiceActive) stringResource(R.string.slide_number, pageIndex + 1)
                              else stringResource(R.string.auto_page_turn_setup),
-        onClick = if (autoPageTurnServiceActive) ({}) else onOpenAccessibilitySettings,
+        onClick = {},
+        popupPages = if (autoPageTurnServiceActive) emptyList() else listOf(
+            { AutoPageSetup(onOpenAppInfo = onOpenAppInfo, onOpenAccessibilitySettings = onOpenAccessibilitySettings) }
+        ),
         iconContent = {
             Text(
                 text = if (autoPageTurnServiceActive) "${pageIndex + 1}" else "!",
@@ -196,6 +200,7 @@ internal fun createAllToolbarButtons(
         icon = if (uiState.canvasPassthrough) Icons.Default.DoNotTouch else Icons.Default.TouchApp,
         contentDescription = if (uiState.canvasPassthrough) stringResource(R.string.disable_passthrough) else stringResource(R.string.enable_passthrough),
         isEnabled = uiState.canvasVisible,
+        isSelected = uiState.canvasPassthrough,
         onClick = onCanvasPassthroughToggle
     ),
     ToolbarButton(
