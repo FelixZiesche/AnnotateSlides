@@ -200,7 +200,7 @@ class MainService : Service() {
         // Automatic slide pages: key presses seen by the (optional) accessibility service
         serviceScope.launch {
             combine(viewModel.uiState, viewModel.textEdit) { ui, edit ->
-                ui.autoPageTurn && ui.canvasVisible && edit == null
+                ui.canvasVisible && edit == null
             }.collect { PageTurnAccessibilityService.listening = it }
         }
         serviceScope.launch {

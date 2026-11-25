@@ -27,9 +27,6 @@ internal fun ToolbarControls(
     onChangeVisibleOnStart: (Boolean) -> Unit,
     fingerDrawingEnabled: Boolean,
     onChangeFingerDrawingEnabled: (Boolean) -> Unit,
-    autoPageTurn: Boolean = false,
-    autoPageTurnServiceActive: Boolean = false,
-    onChangeAutoPageTurn: (Boolean) -> Unit = {},
     onQuitApplication: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
@@ -71,16 +68,7 @@ internal fun ToolbarControls(
             isChecked = fingerDrawingEnabled,
             onCheckedChange = onChangeFingerDrawingEnabled
         )
-        CheckboxControl(
-            label = stringResource(R.string.auto_page_turn),
-            isChecked = autoPageTurn,
-            onCheckedChange = onChangeAutoPageTurn,
-            description = when {
-                autoPageTurn && !autoPageTurnServiceActive -> stringResource(R.string.auto_page_turn_setup)
-                autoPageTurn -> stringResource(R.string.auto_page_turn_on)
-                else -> null
-            }
-        )
+
         Button(
             onClick = onQuitApplication,
             modifier = Modifier.fillMaxWidth(),

@@ -1,8 +1,6 @@
 package com.shezik.drawanywhere.view.toolbar
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.*
@@ -86,11 +84,9 @@ internal fun createAllToolbarButtons(
     fingerDrawingEnabled: Boolean,
     onChangeFingerDrawingEnabled: (Boolean) -> Unit,
     autoPageTurnServiceActive: Boolean,
-    onChangeAutoPageTurn: (Boolean) -> Unit,
     onCycleLockMode: () -> Unit,
     pageIndex: Int,
-    onPreviousPage: () -> Unit,
-    onNextPage: () -> Unit,
+    onOpenAccessibilitySettings: () -> Unit,
     lockMode: LockMode,
     onQuitApplication: () -> Unit
 ): List<ToolbarButton> = listOf(
@@ -100,32 +96,23 @@ internal fun createAllToolbarButtons(
         contentDescription = if (uiState.canvasVisible) stringResource(R.string.hide_canvas) else stringResource(R.string.show_canvas),
         onClick = onCanvasVisibilityToggle
     ),
-    ToolbarButton(
-        id = "page_prev",
-        icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-        contentDescription = stringResource(R.string.previous_slide),
-        isEnabled = pageIndex > 0,
-        onClick = onPreviousPage
-    ),
+    // Slide page indicator; pages switch automatically via the accessibility service.
+    // While that service is off, the indicator shows "!" and opens its settings.
     ToolbarButton(
         id = "page_number",
         icon = Icons.Default.Slideshow,
-        contentDescription = stringResource(R.string.slide_number, pageIndex + 1),
-        onClick = {},
+        contentDescription = if (autoPageTurnServiceActive) stringResource(R.string.slide_number, pageIndex + 1)
+                             else stringResource(R.string.auto_page_turn_setup),
+        onClick = if (autoPageTurnServiceActive) ({}) else onOpenAccessibilitySettings,
         iconContent = {
             Text(
-                text = "${pageIndex + 1}",
+                text = if (autoPageTurnServiceActive) "${pageIndex + 1}" else "!",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = if (autoPageTurnServiceActive) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.error
             )
         }
-    ),
-    ToolbarButton(
-        id = "page_next",
-        icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-        contentDescription = stringResource(R.string.next_slide),
-        onClick = onNextPage
     ),
     ToolbarButton(
         id = "undo",
@@ -232,9 +219,6 @@ internal fun createAllToolbarButtons(
                 onChangeVisibleOnStart = onChangeVisibleOnStart,
                 fingerDrawingEnabled = fingerDrawingEnabled,
                 onChangeFingerDrawingEnabled = onChangeFingerDrawingEnabled,
-                autoPageTurn = uiState.autoPageTurn,
-                autoPageTurnServiceActive = autoPageTurnServiceActive,
-                onChangeAutoPageTurn = onChangeAutoPageTurn,
                 onQuitApplication = onQuitApplication
             ) },
             { AboutScreen() }

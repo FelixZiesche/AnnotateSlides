@@ -46,13 +46,9 @@
     <string name="text_done">Done</string>
     <string name="text_delete">Delete text</string>
     <string name="fork_notice">Annotate Slides is a modified version of DrawAnywhere (github.com/DrawAnywhere/DrawAnywhere). Text tool © 2026 FelixZiesche. Source: github.com/FelixZiesche/AnnotateSlides</string>
-    <string name="previous_slide">Previous slide</string>
-    <string name="next_slide">Next slide</string>
     <string name="slide_number">Slide %1$d</string>
     <string name="move_toolbar">Move toolbar</string>
     <string name="accessibility_service_label">Annotate Slides: automatic slides</string>
     <string name="accessibility_service_description">Lets Annotate Slides notice arrow keys, Page Up/Down and presenter clickers so that every slide gets its own annotation page automatically. Keys are passed on unchanged; screen content is not read.</string>
-    <string name="auto_page_turn">Auto slide pages</string>
-    <string name="auto_page_turn_on">On: arrow keys / clicker switch pages too</string>
     <string name="auto_page_turn_setup">Tap to enable the accessibility service</string>
 </resources>

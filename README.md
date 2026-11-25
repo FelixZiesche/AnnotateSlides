@@ -23,23 +23,31 @@ Drag the grip (⋮⋮) at the start of the toolbar to move it anywhere on the sc
 
 ## Slides (pages)
 
-The ◀ 1 ▶ buttons in the toolbar switch between slide pages. Every page has its own drawings,
-texts and undo history. ▶ on the last page opens an empty page; ◀ brings back the previous
-page's annotations. Pages are kept in memory until the app is closed. The app cannot see which
-slide PowerPoint shows, so pages are switched with these buttons (e.g. turn the slide in
-pass-through mode, then tap ▶).
+Every slide gets its own annotation page: drawings, texts and undo history. Pages switch
+automatically when you turn the slide with a Bluetooth keyboard or presenter clicker
+(→ ↓ Page Down = next, ← ↑ Page Up = previous); the keys still reach PowerPoint unchanged.
+Going back restores the earlier page. Pages are kept in memory until the app is closed.
+The number in the toolbar shows the current page.
 
-### Automatic slide pages (optional)
+This uses an accessibility service that only observes these keys (no screen content is read).
+While it is not enabled, the toolbar shows a red "!" — tap it to open the accessibility settings.
+Swipes on the screen are not detected; PowerPoint animation steps on the same keys also switch pages.
 
-Settings → "Auto slide pages" uses an accessibility service that only *observes* hardware keys:
-→ ↓ Page Down switch to the next page, ← ↑ Page Up to the previous one, while the keys still reach
-PowerPoint unchanged. This works with Bluetooth keyboards and presenter clickers, not with swipes.
-Note: PowerPoint animations that are stepped with the same keys also switch the page.
+### Enabling the accessibility service on Xiaomi HyperOS
 
-Enabling on Xiaomi HyperOS (sideloaded apps):
-1. Settings → Additional settings → Accessibility → Downloaded apps → Annotate Slides → On.
-2. If Android says "Restricted setting": Settings → Apps → Manage apps → Annotate Slides →
-   ⋮ (top right) → "Allow restricted settings", then repeat step 1.
+1. Settings → Additional settings → Accessibility → Downloaded apps → Annotate Slides → try to switch it on
+   (Android blocks it once — this step is needed so the next option appears).
+2. Settings → Apps → Manage apps → Annotate Slides → ⋮ (top right) → "Allow restricted settings".
+   HyperOS then shows a security warning with a countdown: wait until it ends, tick the box and confirm.
+3. Repeat step 1.
+
+If step 2 is impossible, use a computer with ADB (USB debugging on):
+
+```
+adb shell appops set de.ziesche.annotateslides ACCESS_RESTRICTED_SETTINGS allow
+```
+
+then repeat step 1.
 
 The overlay window is only focusable while a text box is being edited, so outside of typing all
 touches and keys go to the app below as before.

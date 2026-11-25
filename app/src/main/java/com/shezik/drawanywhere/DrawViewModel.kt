@@ -53,8 +53,6 @@ data class UiState(
     val recentColors: List<Color> = emptyList(),
     /** Semi-transparent white box behind new/edited text boxes. */
     val textBackground: Boolean = false,
-    /** Switch slide pages automatically on arrow keys / clicker (needs the accessibility service). */
-    val autoPageTurn: Boolean = false,
 
     val currentPenType: PenType = PenType.Pen,
     val penConfigs: Map<PenType, PenConfig> = defaultPenConfigs(),
@@ -328,9 +326,6 @@ class DrawViewModel(
     }
 
     // ── Slide pages ──────────────────────────────────────────────
-
-    fun setAutoPageTurn(enabled: Boolean) =
-        _uiState.update { it.copy(autoPageTurn = enabled) }
 
     fun nextPage() = goToPage(pageIndex.value + 1)
     fun previousPage() = goToPage(pageIndex.value - 1)

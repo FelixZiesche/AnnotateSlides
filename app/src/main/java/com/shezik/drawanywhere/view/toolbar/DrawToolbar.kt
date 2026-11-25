@@ -73,23 +73,17 @@ fun DrawToolbar(
         fingerDrawingEnabled = uiState.fingerDrawingEnabled,
         onChangeFingerDrawingEnabled = viewModel::setFingerDrawingEnabled,
         autoPageTurnServiceActive = autoPageServiceActive,
-        onChangeAutoPageTurn = { enabled ->
-            viewModel.setAutoPageTurn(enabled)
-            if (enabled && !PageTurnAccessibilityService.connected.value) {
-                // Let the user switch on the accessibility service
-                runCatching {
-                    context.startActivity(
-                        Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    )
-                }
-            }
-        },
         onCycleLockMode = viewModel::cycleLockMode,
         lockMode = lockMode,
         pageIndex = pageIndex,
-        onPreviousPage = viewModel::previousPage,
-        onNextPage = viewModel::nextPage,
+        onOpenAccessibilitySettings = {
+            runCatching {
+                context.startActivity(
+                    Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            }
+        },
         onQuitApplication = viewModel::quitApplication
     ).associateBy { it.id }
 
