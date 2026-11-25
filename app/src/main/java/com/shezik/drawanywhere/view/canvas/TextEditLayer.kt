@@ -50,7 +50,7 @@ import com.shezik.drawanywhere.model.TextItem
  * keyboard both reach this EditText. Enter inserts a new line, Esc or Back finishes.
  */
 class TextEditLayer(
-    context: Context,
+    private val context: Context,
     private val container: FrameLayout,
     private val viewModel: DrawViewModel,
 ) {
@@ -109,10 +109,11 @@ class TextEditLayer(
 
     private val buttonSize = (40 * density).toInt()
 
-    private fun makeButton(iconRes: Int, description: Int, onClick: () -> Unit) =
-        ImageButton(context).apply {
+    private fun makeButton(iconRes: Int, description: Int, onClick: () -> Unit): ImageButton {
+        val label = context.getString(description)
+        return ImageButton(context).apply {
             setImageResource(iconRes)
-            contentDescription = context.getString(description)
+            contentDescription = label
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(0xF2_FFFFFF.toInt())
@@ -125,6 +126,7 @@ class TextEditLayer(
                 marginEnd = (8 * density).toInt()
             }
         }
+    }
 
     private val buttons = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL
