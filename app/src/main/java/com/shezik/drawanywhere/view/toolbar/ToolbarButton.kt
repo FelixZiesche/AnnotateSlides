@@ -85,6 +85,8 @@ internal fun createAllToolbarButtons(
     onChangeVisibleOnStart: (Boolean) -> Unit,
     fingerDrawingEnabled: Boolean,
     onChangeFingerDrawingEnabled: (Boolean) -> Unit,
+    autoPageTurnServiceActive: Boolean,
+    onChangeAutoPageTurn: (Boolean) -> Unit,
     onCycleLockMode: () -> Unit,
     pageIndex: Int,
     onPreviousPage: () -> Unit,
@@ -230,6 +232,9 @@ internal fun createAllToolbarButtons(
                 onChangeVisibleOnStart = onChangeVisibleOnStart,
                 fingerDrawingEnabled = fingerDrawingEnabled,
                 onChangeFingerDrawingEnabled = onChangeFingerDrawingEnabled,
+                autoPageTurn = uiState.autoPageTurn,
+                autoPageTurnServiceActive = autoPageTurnServiceActive,
+                onChangeAutoPageTurn = onChangeAutoPageTurn,
                 onQuitApplication = onQuitApplication
             ) },
             { AboutScreen() }

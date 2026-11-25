@@ -21,7 +21,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import android.content.Intent
+import android.provider.Settings
+import androidx.compose.ui.platform.LocalContext
 import com.shezik.drawanywhere.DrawViewModel
+import com.shezik.drawanywhere.PageTurnAccessibilityService
 import com.shezik.drawanywhere.util.scrollFadingEdges
 import com.shezik.drawanywhere.ui.theme.DrawAnywhereTheme
 import com.shezik.drawanywhere.ui.theme.Spacing
@@ -39,6 +43,8 @@ fun DrawToolbar(
     val canClearCanvas by viewModel.canClearCanvas.collectAsState()
     val lockMode by viewModel.lockMode.collectAsState()
     val pageIndex by viewModel.pageIndex.collectAsState()
+    val autoPageServiceActive by PageTurnAccessibilityService.connected.collectAsState()
+    val context = LocalContext.current
 
     val haptics = LocalHapticFeedback.current
     val hScrollState = rememberScrollState()
@@ -66,6 +72,19 @@ fun DrawToolbar(
         onChangeVisibleOnStart = viewModel::setVisibleOnStart,
         fingerDrawingEnabled = uiState.fingerDrawingEnabled,
         onChangeFingerDrawingEnabled = viewModel::setFingerDrawingEnabled,
+        autoPageTurnServiceActive = autoPageServiceActive,
+        onChangeAutoPageTurn = { enabled ->
+            viewModel.setAutoPageTurn(enabled)
+            if (enabled && !PageTurnAccessibilityService.connected.value) {
+                // Let the user switch on the accessibility service
+                runCatching {
+                    context.startActivity(
+                        Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                }
+            }
+        },
         onCycleLockMode = viewModel::cycleLockMode,
         lockMode = lockMode,
         pageIndex = pageIndex,

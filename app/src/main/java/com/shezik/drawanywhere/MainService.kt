@@ -197,6 +197,18 @@ class MainService : Service() {
                 }
         }
 
+        // Automatic slide pages: key presses seen by the (optional) accessibility service
+        serviceScope.launch {
+            combine(viewModel.uiState, viewModel.textEdit) { ui, edit ->
+                ui.autoPageTurn && ui.canvasVisible && edit == null
+            }.collect { PageTurnAccessibilityService.listening = it }
+        }
+        serviceScope.launch {
+            PageTurnAccessibilityService.pageTurns.collect { dir ->
+                if (dir > 0) viewModel.nextPage() else viewModel.previousPage()
+            }
+        }
+
         // Observe service state changes
         serviceScope.launch {
             viewModel.serviceState.collect { state ->
@@ -263,6 +275,7 @@ class MainService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         isRunning = false
+        PageTurnAccessibilityService.listening = false
         serviceScope.cancel()
         if (::toolbarView.isInitialized && toolbarView.isAttachedToWindow)
             windowManager.removeView(toolbarView)

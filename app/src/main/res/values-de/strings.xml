@@ -50,4 +50,9 @@
     <string name="next_slide">Nächste Folie</string>
     <string name="slide_number">Folie %1$d</string>
     <string name="move_toolbar">Toolbar verschieben</string>
+    <string name="accessibility_service_label">Annotate Slides: Folien automatisch</string>
+    <string name="accessibility_service_description">Erlaubt Annotate Slides, Pfeiltasten, Bild auf/ab und Presenter zu bemerken, damit jede Folie automatisch eine eigene Notizseite bekommt. Die Tasten werden unverändert weitergegeben, der Bildschirminhalt wird nicht gelesen.</string>
+    <string name="auto_page_turn">Folien automatisch wechseln</string>
+    <string name="auto_page_turn_on">Pfeiltasten und Presenter wechseln auch die Seite</string>
+    <string name="auto_page_turn_setup">Tippen, um die Bedienungshilfe einzuschalten</string>
 </resources>

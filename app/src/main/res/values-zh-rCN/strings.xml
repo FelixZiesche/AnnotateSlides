@@ -51,4 +51,9 @@
     <string name="next_slide">下一张幻灯片</string>
     <string name="slide_number">第 %1$d 张幻灯片</string>
     <string name="move_toolbar">移动工具栏</string>
+    <string name="accessibility_service_label">Annotate Slides：自动翻页</string>
+    <string name="accessibility_service_description">允许 Annotate Slides 检测方向键、翻页键和翻页笔，使每张幻灯片自动拥有独立的批注页。按键会原样传递，不读取屏幕内容。</string>
+    <string name="auto_page_turn">自动切换幻灯片页</string>
+    <string name="auto_page_turn_on">方向键/翻页笔同时切换批注页</string>
+    <string name="auto_page_turn_setup">点按以启用无障碍服务</string>
 </resources>

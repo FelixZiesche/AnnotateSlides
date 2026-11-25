@@ -29,6 +29,18 @@ page's annotations. Pages are kept in memory until the app is closed. The app ca
 slide PowerPoint shows, so pages are switched with these buttons (e.g. turn the slide in
 pass-through mode, then tap ▶).
 
+### Automatic slide pages (optional)
+
+Settings → "Auto slide pages" uses an accessibility service that only *observes* hardware keys:
+→ ↓ Page Down switch to the next page, ← ↑ Page Up to the previous one, while the keys still reach
+PowerPoint unchanged. This works with Bluetooth keyboards and presenter clickers, not with swipes.
+Note: PowerPoint animations that are stepped with the same keys also switch the page.
+
+Enabling on Xiaomi HyperOS (sideloaded apps):
+1. Settings → Additional settings → Accessibility → Downloaded apps → Annotate Slides → On.
+2. If Android says "Restricted setting": Settings → Apps → Manage apps → Annotate Slides →
+   ⋮ (top right) → "Allow restricted settings", then repeat step 1.
+
 The overlay window is only focusable while a text box is being edited, so outside of typing all
 touches and keys go to the app below as before.
 
