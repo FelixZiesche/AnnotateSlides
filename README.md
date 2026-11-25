@@ -23,7 +23,9 @@ touches and keys go to the app below as before.
 ## Install / updates
 
 Signed APKs are published on the [Releases](https://github.com/FelixZiesche/AnnotateSlides/releases)
-page for every tag `vX.Y.Z`. Add `https://github.com/FelixZiesche/AnnotateSlides` to
+page for every tag `vX.Y.Z`. To make a new release, either push such a tag or open
+Actions → Release → "Run workflow" and enter the new version (e.g. `v1.0.1`); the
+versionCode is derived from it (`v1.2.3` → 10203), so each higher version updates cleanly. Add `https://github.com/FelixZiesche/AnnotateSlides` to
 [Obtainium](https://github.com/ImranR98/Obtainium) to get updates. The app id is
 `de.ziesche.annotateslides`, so it installs next to the original DrawAnywhere.
 
