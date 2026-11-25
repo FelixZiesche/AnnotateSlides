@@ -38,6 +38,7 @@ fun DrawToolbar(
     val canRedo by viewModel.canRedo.collectAsState()
     val canClearCanvas by viewModel.canClearCanvas.collectAsState()
     val lockMode by viewModel.lockMode.collectAsState()
+    val pageIndex by viewModel.pageIndex.collectAsState()
 
     val haptics = LocalHapticFeedback.current
     val hScrollState = rememberScrollState()
@@ -67,6 +68,9 @@ fun DrawToolbar(
         onChangeFingerDrawingEnabled = viewModel::setFingerDrawingEnabled,
         onCycleLockMode = viewModel::cycleLockMode,
         lockMode = lockMode,
+        pageIndex = pageIndex,
+        onPreviousPage = viewModel::previousPage,
+        onNextPage = viewModel::nextPage,
         onQuitApplication = viewModel::quitApplication
     ).associateBy { it.id }
 

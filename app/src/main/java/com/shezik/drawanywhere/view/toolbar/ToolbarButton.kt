@@ -1,6 +1,8 @@
 package com.shezik.drawanywhere.view.toolbar
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.*
@@ -84,6 +86,9 @@ internal fun createAllToolbarButtons(
     fingerDrawingEnabled: Boolean,
     onChangeFingerDrawingEnabled: (Boolean) -> Unit,
     onCycleLockMode: () -> Unit,
+    pageIndex: Int,
+    onPreviousPage: () -> Unit,
+    onNextPage: () -> Unit,
     lockMode: LockMode,
     onQuitApplication: () -> Unit
 ): List<ToolbarButton> = listOf(
@@ -92,6 +97,33 @@ internal fun createAllToolbarButtons(
         icon = if (uiState.canvasVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
         contentDescription = if (uiState.canvasVisible) stringResource(R.string.hide_canvas) else stringResource(R.string.show_canvas),
         onClick = onCanvasVisibilityToggle
+    ),
+    ToolbarButton(
+        id = "page_prev",
+        icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+        contentDescription = stringResource(R.string.previous_slide),
+        isEnabled = pageIndex > 0,
+        onClick = onPreviousPage
+    ),
+    ToolbarButton(
+        id = "page_number",
+        icon = Icons.Default.Slideshow,
+        contentDescription = stringResource(R.string.slide_number, pageIndex + 1),
+        onClick = {},
+        iconContent = {
+            Text(
+                text = "${pageIndex + 1}",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    ),
+    ToolbarButton(
+        id = "page_next",
+        icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+        contentDescription = stringResource(R.string.next_slide),
+        onClick = onNextPage
     ),
     ToolbarButton(
         id = "undo",

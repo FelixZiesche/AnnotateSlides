@@ -125,6 +125,7 @@ class DrawViewModel(
     val canUndo: StateFlow<Boolean> = controller.canUndo
     val canRedo: StateFlow<Boolean> = controller.canRedo
     val canClearCanvas: StateFlow<Boolean> = controller.canClearStrokes
+    val pageIndex: StateFlow<Int> = controller.pageIndex
 
     // ── Text tool state ──────────────────────────────────────────
 
@@ -322,6 +323,19 @@ class DrawViewModel(
         cancelTextGesture()
         finishTextEditing()
         controller.redo()
+    }
+
+    // ── Slide pages ──────────────────────────────────────────────
+
+    fun nextPage() = goToPage(pageIndex.value + 1)
+    fun previousPage() = goToPage(pageIndex.value - 1)
+
+    private fun goToPage(index: Int) {
+        if (index < 0) return
+        cancelTextGesture()
+        finishStroke()
+        finishTextEditing()
+        controller.goToPage(index)
     }
 
     // ── Text tool ────────────────────────────────────────────────

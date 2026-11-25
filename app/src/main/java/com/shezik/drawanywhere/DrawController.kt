@@ -59,6 +59,50 @@ class DrawController(initialConfig: PenConfig) {
 
     private var activeTool: StrokeTool? = null
 
+    // ── Slide pages ───────────────────────────────────────────────
+    // Every slide gets its own strokes, texts and undo history. Pages that are not shown
+    // are kept in memory (until the app is closed) so going back restores them.
+
+    private data class PageState(
+        val strokes: List<Stroke>,
+        val texts: List<TextItem>,
+        val history: Pair<List<DrawAction>, List<DrawAction>>,
+    )
+
+    private val savedPages = mutableMapOf<Int, PageState>()
+
+    private val _pageIndex = MutableStateFlow(0)
+    /** 0-based index of the slide page currently shown. */
+    val pageIndex: StateFlow<Int> = _pageIndex.asStateFlow()
+
+    /** Show page [index]: the current page is stored, the target restored (or empty). */
+    fun goToPage(index: Int) {
+        val current = _pageIndex.value
+        if (index < 0 || index == current) return
+        finishStroke()
+        val keep = _strokeList.filter { !it.penType.isEphemeral }
+        if (keep.isEmpty() && _textList.isEmpty() && !undoRedo.canUndo.value && !undoRedo.canRedo.value) {
+            savedPages.remove(current)
+        } else {
+            savedPages[current] = PageState(keep, _textList.toList(), undoRedo.exportStacks())
+        }
+        val target = savedPages.remove(index)
+        _strokeList.clear()
+        _textList.clear()
+        if (target != null) {
+            _strokeList.addAll(target.strokes)
+            _textList.addAll(target.texts)
+        }
+        undoRedo.importStacks(target?.history ?: (emptyList<DrawAction>() to emptyList()))
+        _pageIndex.value = index
+        notifyChanged()
+    }
+
+    /** True if page [index] has saved content (used for the page indicator). */
+    fun pageHasContent(index: Int): Boolean =
+        if (index == _pageIndex.value) _strokeList.isNotEmpty() || _textList.isNotEmpty()
+        else savedPages[index]?.let { it.strokes.isNotEmpty() || it.texts.isNotEmpty() } == true
+
     private val toolContext get() = ToolContext(
         strokes = _strokeList,
         penConfig = penConfig,

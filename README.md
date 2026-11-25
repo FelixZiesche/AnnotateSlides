@@ -17,6 +17,14 @@ through a mirrored projector.
 - Text works with undo/redo and "clear canvas", and stays when the canvas is hidden or switched to
   pass-through (for turning slides).
 
+## Slides (pages)
+
+The ◀ 1 ▶ buttons in the toolbar switch between slide pages. Every page has its own drawings,
+texts and undo history. ▶ on the last page opens an empty page; ◀ brings back the previous
+page's annotations. Pages are kept in memory until the app is closed. The app cannot see which
+slide PowerPoint shows, so pages are switched with these buttons (e.g. turn the slide in
+pass-through mode, then tap ▶).
+
 The overlay window is only focusable while a text box is being edited, so outside of typing all
 touches and keys go to the app below as before.
 

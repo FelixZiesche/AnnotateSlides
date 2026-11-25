@@ -47,4 +47,7 @@
     <string name="text_done">完成</string>
     <string name="text_delete">删除文字</string>
     <string name="fork_notice">Annotate Slides 是 DrawAnywhere (github.com/DrawAnywhere/DrawAnywhere) 的修改版本。文字工具 © 2026 FelixZiesche。源代码：github.com/FelixZiesche/AnnotateSlides</string>
+    <string name="previous_slide">上一张幻灯片</string>
+    <string name="next_slide">下一张幻灯片</string>
+    <string name="slide_number">第 %1$d 张幻灯片</string>
 </resources>

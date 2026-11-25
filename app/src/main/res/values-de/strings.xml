@@ -46,4 +46,7 @@
     <string name="text_done">Fertig</string>
     <string name="text_delete">Text löschen</string>
     <string name="fork_notice">Annotate Slides ist eine veränderte Version von DrawAnywhere (github.com/DrawAnywhere/DrawAnywhere). Textwerkzeug © 2026 FelixZiesche. Quellcode: github.com/FelixZiesche/AnnotateSlides</string>
+    <string name="previous_slide">Vorige Folie</string>
+    <string name="next_slide">Nächste Folie</string>
+    <string name="slide_number">Folie %1$d</string>
 </resources>

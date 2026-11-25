@@ -26,6 +26,17 @@ class UndoRedoManager(private val maxDepth: Int = 50) {
         updateUndoRedoState()
     }
 
+    /** Snapshot of both stacks (used when switching slide pages). */
+    internal fun exportStacks(): Pair<List<DrawAction>, List<DrawAction>> =
+        undoStack.toList() to redoStack.toList()
+
+    /** Replace both stacks, e.g. with a page's saved history (empty for a new page). */
+    internal fun importStacks(stacks: Pair<List<DrawAction>, List<DrawAction>>) {
+        undoStack.clear(); undoStack.addAll(stacks.first)
+        redoStack.clear(); redoStack.addAll(stacks.second)
+        updateUndoRedoState()
+    }
+
     internal fun popUndo(): DrawAction? {
         if (undoStack.isEmpty()) return null
         val action = undoStack.removeAt(undoStack.lastIndex)
