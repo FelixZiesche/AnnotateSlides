@@ -107,6 +107,8 @@ class DrawViewModel(
         const val TOOLBAR_DIM_ALPHA = 0.5f
         const val TOOLBAR_DIM_DURATION_MS = 300L
         private const val TEXT_DRAG_SLOP_DP = 8f
+        /** Hold a text box this long to pick it up and move it (any tool). */
+        const val TEXT_HOLD_MS = 350L
     }
     private val _uiState = MutableStateFlow(initialUiState)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -193,6 +195,15 @@ class DrawViewModel(
             return
         }
 
+        // Drawing tool on a text box: holding still picks the box up, moving draws.
+        if (modifier == StrokeModifier.None) {
+            val editingId = textEdit.value?.draft?.id
+            textHitTest(point)?.takeIf { it.id != editingId }?.let { hit ->
+                beginPendingHold(point, hit)
+                return
+            }
+        }
+
         val newPenType = resolvePenType(modifier)
         if (newPenType != uiState.value.currentPenType) {
             previousPenType = uiState.value.currentPenType
@@ -204,12 +215,14 @@ class DrawViewModel(
     }
 
     fun updateStroke(point: Offset) {
+        pendingHold?.let { updatePendingHold(it, point); return }
         textGesture?.let { moveTextGesture(it, point); return }
         if (!isStrokeDown) return
         controller.updateLatestStroke(point)
     }
 
     fun finishStroke() {
+        pendingHold?.let { finishPendingHold(it); return }
         textGesture?.let { endTextGesture(it); return }
         if (!isStrokeDown) return
 
@@ -347,6 +360,50 @@ class DrawViewModel(
     }
 
     private var textGesture: TextGesture? = null
+    private var holdJob: Job? = null
+
+    /** Called when a text box was picked up by holding it (for haptic feedback). */
+    var onTextPickedUp: (() -> Unit)? = null
+
+    /** Touch on a text box with a drawing tool, not yet decided: draw or pick up. */
+    private class PendingHold(val down: Offset, val hit: TextItem) {
+        val points = mutableListOf(down)
+    }
+
+    private var pendingHold: PendingHold? = null
+
+    private fun beginPendingHold(point: Offset, hit: TextItem) {
+        val pending = PendingHold(point, hit)
+        pendingHold = pending
+        holdJob?.cancel()
+        holdJob = viewModelScope.launch {
+            delay(TEXT_HOLD_MS)
+            if (pendingHold !== pending) return@launch
+            pendingHold = null
+            textGesture = TextGesture(pending.down, pending.hit).apply { moved = true }
+            onTextPickedUp?.invoke()
+        }
+    }
+
+    private fun updatePendingHold(p: PendingHold, point: Offset) {
+        p.points += point
+        val slop = TEXT_DRAG_SLOP_DP * textScale / currentZoom()
+        if ((point - p.down).getDistance() > slop) startDeferredStroke(p)
+    }
+
+    private fun finishPendingHold(p: PendingHold) {
+        startDeferredStroke(p)  // a short tap draws a dot, as without a text box
+        finishStroke()
+    }
+
+    /** The finger moved (or lifted) before the hold time: it was drawing after all. */
+    private fun startDeferredStroke(p: PendingHold) {
+        holdJob?.cancel()
+        pendingHold = null
+        controller.createStroke(p.down)
+        p.points.drop(1).forEach { controller.updateLatestStroke(it) }
+        isStrokeDown = true
+    }
 
     private fun currentZoom(): Float = viewport.value.zoom.takeIf { it > 0f } ?: 1f
 
@@ -357,6 +414,17 @@ class DrawViewModel(
         val hit = textHitTest(point)?.takeIf { it.id != editingId }
         val gesture = TextGesture(point, hit)
         textGesture = gesture
+        holdJob?.cancel()
+        if (hit != null) {
+            // Holding still picks the box up (haptic), then it follows the finger.
+            holdJob = viewModelScope.launch {
+                delay(TEXT_HOLD_MS)
+                if (textGesture === gesture && !gesture.moved && !gesture.consumed) {
+                    gesture.moved = true
+                    onTextPickedUp?.invoke()
+                }
+            }
+        }
     }
 
     private fun moveTextGesture(g: TextGesture, point: Offset) {
@@ -373,6 +441,7 @@ class DrawViewModel(
     }
 
     private fun endTextGesture(g: TextGesture) {
+        holdJob?.cancel()
         textGesture = null
         if (g.consumed) return
         val hit = g.hit
@@ -395,6 +464,8 @@ class DrawViewModel(
 
     /** Abort a running touch gesture on a text box (e.g. a second finger came down). */
     fun cancelTextGesture() {
+        holdJob?.cancel()
+        pendingHold = null
         val g = textGesture ?: return
         textGesture = null
         if (g.moved && !g.consumed) g.hit?.let { controller.previewText(it) }

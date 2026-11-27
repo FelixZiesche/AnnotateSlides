@@ -81,6 +81,7 @@ class NativeDrawCanvasView(
             val tolerance = 16f * context.resources.displayMetrics.density / viewModel.viewport.value.zoom
             textRenderer.hitTest(drawController.textList, point, tolerance)
         }
+        viewModel.onTextPickedUp = { performHapticFeedback(HapticFeedbackConstants.LONG_PRESS) }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean =
