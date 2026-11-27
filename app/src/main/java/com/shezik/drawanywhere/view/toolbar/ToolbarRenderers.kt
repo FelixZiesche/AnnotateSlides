@@ -27,7 +27,9 @@ import com.shezik.drawanywhere.R
 import com.shezik.drawanywhere.ui.theme.Spacing
 
 /** Compact toolbar buttons (Material default is 48dp). */
-internal val TOOLBAR_BUTTON_SIZE = 40.dp
+internal val TOOLBAR_BUTTON_SIZE = 34.dp
+/** Icon size inside the compact toolbar buttons (Material default is 24dp). */
+internal val TOOLBAR_ICON_SIZE = 20.dp
 
 @Composable
 internal fun RenderButton(button: ToolbarButton, popupAlignment: Alignment, modifier: Modifier = Modifier) {
@@ -69,7 +71,7 @@ internal fun ToolbarExpandButton(
             contentDescription = if (isExpanded) stringResource(R.string.collapse_toolbar) else stringResource(R.string.expand_toolbar),
             tint = if (isExpanded) MaterialTheme.colorScheme.onPrimaryContainer
             else MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.graphicsLayer { rotationZ = rotationAngle }
+            modifier = Modifier.size(TOOLBAR_ICON_SIZE).graphicsLayer { rotationZ = rotationAngle }
         )
     }
 }
@@ -98,6 +100,7 @@ internal fun AnimatedToolbarButton(modifier: Modifier, button: ToolbarButton) {
             ?: Icon(
                 imageVector = button.icon,
                 contentDescription = button.contentDescription,
+                modifier = Modifier.size(TOOLBAR_ICON_SIZE),
                 tint = if (button.isEnabled) iconColor else iconColor.copy(alpha = 0.4f)
             )
     }

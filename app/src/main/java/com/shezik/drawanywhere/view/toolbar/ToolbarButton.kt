@@ -85,37 +85,37 @@ internal fun createAllToolbarButtons(
     onChangeFingerDrawingEnabled: (Boolean) -> Unit,
     autoPageTurnServiceActive: Boolean,
     onCycleLockMode: () -> Unit,
-    pageIndex: Int,
     onOpenAccessibilitySettings: () -> Unit,
     onOpenAppInfo: () -> Unit,
     lockMode: LockMode,
     onQuitApplication: () -> Unit
-): List<ToolbarButton> = listOf(
+): List<ToolbarButton> = listOfNotNull(
+    // Touch passthrough first: the most used switch while presenting.
+    ToolbarButton(
+        id = "passthrough",
+        icon = if (uiState.canvasPassthrough) Icons.Default.DoNotTouch else Icons.Default.TouchApp,
+        contentDescription = if (uiState.canvasPassthrough) stringResource(R.string.disable_passthrough) else stringResource(R.string.enable_passthrough),
+        isEnabled = uiState.canvasVisible,
+        isSelected = uiState.canvasPassthrough,
+        onClick = onCanvasPassthroughToggle
+    ),
     ToolbarButton(
         id = "visibility",
         icon = if (uiState.canvasVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
         contentDescription = if (uiState.canvasVisible) stringResource(R.string.hide_canvas) else stringResource(R.string.show_canvas),
         onClick = onCanvasVisibilityToggle
     ),
-    // Slide page indicator; pages switch automatically via the accessibility service.
-    // While that service is off, the indicator shows "!" and opens its settings.
-    ToolbarButton(
-        id = "page_number",
+    // Slides switch automatically. Only while the accessibility service is off,
+    // a red "!" is shown that explains how to switch it on.
+    if (autoPageTurnServiceActive) null else ToolbarButton(
+        id = "auto_page_setup",
         icon = Icons.Default.Slideshow,
-        contentDescription = if (autoPageTurnServiceActive) stringResource(R.string.slide_number, pageIndex + 1)
-                             else stringResource(R.string.auto_page_turn_setup),
-        onClick = {},
-        popupPages = if (autoPageTurnServiceActive) emptyList() else listOf(
+        contentDescription = stringResource(R.string.auto_page_turn_setup),
+        popupPages = listOf(
             { AutoPageSetup(onOpenAppInfo = onOpenAppInfo, onOpenAccessibilitySettings = onOpenAccessibilitySettings) }
         ),
         iconContent = {
-            Text(
-                text = if (autoPageTurnServiceActive) "${pageIndex + 1}" else "!",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (autoPageTurnServiceActive) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.error
-            )
+            Text(text = "!", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
         }
     ),
     ToolbarButton(
@@ -161,7 +161,7 @@ internal fun createAllToolbarButtons(
             val selected = uiState.currentPenType == PenType.Text
             Text(
                 text = "T",
-                fontSize = 22.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
                         else MaterialTheme.colorScheme.onSurface.copy(alpha = if (uiState.canvasVisible) 1f else 0.4f)
@@ -194,14 +194,6 @@ internal fun createAllToolbarButtons(
         },
         isEnabled = uiState.canvasVisible,
         onClick = onCycleLockMode
-    ),
-    ToolbarButton(
-        id = "passthrough",
-        icon = if (uiState.canvasPassthrough) Icons.Default.DoNotTouch else Icons.Default.TouchApp,
-        contentDescription = if (uiState.canvasPassthrough) stringResource(R.string.disable_passthrough) else stringResource(R.string.enable_passthrough),
-        isEnabled = uiState.canvasVisible,
-        isSelected = uiState.canvasPassthrough,
-        onClick = onCanvasPassthroughToggle
     ),
     ToolbarButton(
         id = "redo",

@@ -49,7 +49,7 @@
     <string name="slide_number">Slide %1$d</string>
     <string name="move_toolbar">Move toolbar</string>
     <string name="accessibility_service_label">Annotate Slides: automatic slides</string>
-    <string name="accessibility_service_description">Lets Annotate Slides notice arrow keys, Page Up/Down and presenter clickers so that every slide gets its own annotation page automatically. Keys are passed on unchanged; screen content is not read.</string>
+    <string name="accessibility_service_description">Lets Annotate Slides follow the slide shown in Google Slides and PowerPoint (it reads only the slide number there) and notice arrow keys, Page Up/Down and presenter clickers, so every slide gets its own annotation page automatically. Keys are passed on unchanged.</string>
     <string name="auto_page_turn_setup">Tap to enable the accessibility service</string>
     <string name="setup_title">Automatic slide pages</string>
     <string name="setup_step1">1. Accessibility → Downloaded apps → Annotate Slides: try to switch on (it gets blocked once).</string>

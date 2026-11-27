@@ -61,12 +61,13 @@ data class UiState(
     val firstDrawerOpen: Boolean = canvasVisible,
     val secondDrawerOpen: Boolean = false,
 
+    // Always visible (not in a drawer): passthrough, show/hide, setup hint.
     // Main row: what is needed while presenting. "More" drawer: rarely used.
     val firstDrawerButtons: Set<String> = setOf(
-        "text_tool", "tool_controls", "color_picker", "undo", "clear", "passthrough"
+        "text_tool", "tool_controls", "color_picker", "undo"
     ),
     val secondDrawerButtons: Set<String> = setOf(
-        "redo", "zoom_lock", "settings"
+        "clear", "redo", "zoom_lock", "settings"
     ),
     val secondDrawerPinnedButtons: Set<String> = emptySet()
 ) {
@@ -331,7 +332,9 @@ class DrawViewModel(
     fun nextPage() = goToPage(pageIndex.value + 1)
     fun previousPage() = goToPage(pageIndex.value - 1)
 
-    private fun goToPage(index: Int) {
+    /** Jump to the page of a slide number read from the presentation app (0-based). */
+    fun goToPage(index: Int) {
+        if (index == pageIndex.value) return
         if (index < 0) return
         cancelTextGesture()
         finishStroke()
