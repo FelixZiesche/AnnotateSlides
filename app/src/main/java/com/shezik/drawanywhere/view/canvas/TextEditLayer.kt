@@ -43,7 +43,7 @@ import com.shezik.drawanywhere.model.TextItem
 
 /**
  * The live edit box for the text tool: a real [EditText] placed over the canvas at the
- * position of the text box being edited, plus small "done" and "delete" buttons.
+ * position of the text box being edited, plus small "move", "done" and "delete" buttons.
  *
  * Lives inside the canvas overlay window. The window only becomes focusable while a
  * box is being edited (see MainService), so the hardware keyboard and the on-screen
@@ -128,9 +128,32 @@ class TextEditLayer(
         }
     }
 
+    /** Grip: drag it to move the box while typing. */
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
+    private val moveButton = makeButton(R.drawable.ic_text_move, R.string.text_move) {}.apply {
+        var lastX = 0f
+        var lastY = 0f
+        setOnTouchListener { v, e ->
+            when (e.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    lastX = e.rawX; lastY = e.rawY
+                    v.isPressed = true
+                    v.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+                }
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    viewModel.moveEditingText(e.rawX - lastX, e.rawY - lastY)
+                    lastX = e.rawX; lastY = e.rawY
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> v.isPressed = false
+            }
+            true
+        }
+    }
+
     private val buttons = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL
         visibility = View.GONE
+        addView(moveButton)
         addView(makeButton(R.drawable.ic_text_done, R.string.text_done) { viewModel.finishTextEditing() })
         addView(makeButton(R.drawable.ic_text_delete, R.string.text_delete) { viewModel.deleteEditingText() })
     }
@@ -210,7 +233,7 @@ class TextEditLayer(
         val gap = 6 * density
         val left = editText.translationX
         val top = editText.translationY
-        buttons.translationX = left.coerceIn(0f, (container.width - 2 * buttonSize).toFloat().coerceAtLeast(0f))
+        buttons.translationX = left.coerceIn(0f, (container.width - 3 * buttonSize).toFloat().coerceAtLeast(0f))
         val above = top - buttonSize - gap
         buttons.translationY = if (above >= 0f) above else top + editText.height + gap
     }

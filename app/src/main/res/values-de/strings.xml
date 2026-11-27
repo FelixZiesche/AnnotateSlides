@@ -45,6 +45,7 @@
     <string name="text_background">Weißer Hintergrund</string>
     <string name="text_done">Fertig</string>
     <string name="text_delete">Text löschen</string>
+    <string name="text_move">Text verschieben (ziehen)</string>
     <string name="fork_notice">Annotate Slides ist eine veränderte Version von DrawAnywhere (github.com/DrawAnywhere/DrawAnywhere). Textwerkzeug © 2026 FelixZiesche. Quellcode: github.com/FelixZiesche/AnnotateSlides</string>
     <string name="slide_number">Folie %1$d</string>
     <string name="move_toolbar">Toolbar verschieben</string>

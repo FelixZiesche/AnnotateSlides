@@ -78,10 +78,9 @@ class NativeDrawCanvasView(
 
     init {
         viewModel.textHitTest = { point ->
-            val tolerance = 8f * context.resources.displayMetrics.density / viewModel.viewport.value.zoom
+            val tolerance = 16f * context.resources.displayMetrics.density / viewModel.viewport.value.zoom
             textRenderer.hitTest(drawController.textList, point, tolerance)
         }
-        viewModel.onTextDeleted = { performHapticFeedback(HapticFeedbackConstants.LONG_PRESS) }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean =
