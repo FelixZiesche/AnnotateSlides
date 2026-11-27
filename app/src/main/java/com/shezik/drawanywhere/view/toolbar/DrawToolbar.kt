@@ -45,7 +45,6 @@ fun DrawToolbar(
     val canRedo by viewModel.canRedo.collectAsState()
     val canClearCanvas by viewModel.canClearCanvas.collectAsState()
     val lockMode by viewModel.lockMode.collectAsState()
-    val pageIndex by viewModel.pageIndex.collectAsState()
     val autoPageServiceActive by PageTurnAccessibilityService.connected.collectAsState()
     val context = LocalContext.current
 
@@ -78,7 +77,6 @@ fun DrawToolbar(
         autoPageTurnServiceActive = autoPageServiceActive,
         onCycleLockMode = viewModel::cycleLockMode,
         lockMode = lockMode,
-        pageIndex = pageIndex,
         onOpenAppInfo = {
             runCatching {
                 context.startActivity(
@@ -109,7 +107,7 @@ fun DrawToolbar(
                     .scrollFadingEdges(vScrollState, true)
                     .horizontalScroll(hScrollState)
                     .verticalScroll(vScrollState)
-                    .padding(Spacing.xs),
+                    .padding(2.dp),
                 haptics = haptics,
                 onPositionChange = viewModel::updateToolbarPosition,
                 onPositionSaved = viewModel::saveToolbarPosition,
@@ -120,13 +118,14 @@ fun DrawToolbar(
             ) {
                 CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
                 ToolbarButtonsContainer(
-                    modifier = Modifier.padding(Spacing.xs),
+                    modifier = Modifier.padding(2.dp),
                     uiState = uiState,
                     allButtonsMap = allButtonsMap,
                     onExpandToggleClick = viewModel::toggleSecondDrawer,
                     dragHandle = {
                         ToolbarDragHandle(
                             haptics = haptics,
+                            vertical = uiState.toolbarOrientation == ToolbarOrientation.VERTICAL,
                             onPositionChange = viewModel::updateToolbarPosition,
                             onPositionSaved = viewModel::saveToolbarPosition,
                             onDragStart = viewModel::onDismissDragStart,
@@ -159,7 +158,7 @@ internal fun ToolbarButtonsContainer(
     val standaloneButtonIds = allButtonsMap.keys.filter {
         it !in firstDrawerButtonIds && it !in secondDrawerButtonIds
     }
-    val arrangement = Arrangement.spacedBy(Spacing.xs)
+    val arrangement = Arrangement.spacedBy(2.dp)
     val popupAlignment = when (orientation) {
         ToolbarOrientation.HORIZONTAL -> Alignment.TopCenter
         ToolbarOrientation.VERTICAL -> Alignment.CenterEnd
@@ -187,10 +186,10 @@ internal fun ToolbarButtonsContainer(
         }
         AnimatedVisibility(isDividerVisible, enter = fadeIn(tween(300)), exit = fadeOut(tween(300))) {
             if (isHorizontal) VerticalDivider(
-                Modifier.height(24.dp).padding(horizontal = Spacing.sm), thickness = 2.dp,
+                Modifier.height(20.dp).padding(horizontal = 2.dp), thickness = 1.dp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
             else HorizontalDivider(
-                Modifier.width(24.dp).padding(vertical = Spacing.sm), thickness = 2.dp,
+                Modifier.width(20.dp).padding(vertical = 2.dp), thickness = 1.dp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
         }
         secondDrawerButtonIds.forEach { id ->

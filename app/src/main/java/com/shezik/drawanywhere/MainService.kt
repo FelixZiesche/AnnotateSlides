@@ -208,6 +208,9 @@ class MainService : Service() {
                 if (dir > 0) viewModel.nextPage() else viewModel.previousPage()
             }
         }
+        serviceScope.launch {
+            PageTurnAccessibilityService.slideJumps.collect { viewModel.goToPage(it) }
+        }
 
         // Observe service state changes
         serviceScope.launch {

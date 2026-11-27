@@ -88,10 +88,11 @@ fun ToolbarDragHandle(
     onDragStart: (() -> Unit)? = null,
     onDragPosition: ((Offset) -> Unit)? = null,
     onDragEnd: (() -> Boolean)? = null,
+    vertical: Boolean = false,
 ) {
     Box(
         modifier = Modifier
-            .size(width = 32.dp, height = 40.dp)
+            .size(width = if (vertical) TOOLBAR_BUTTON_SIZE else 20.dp, height = if (vertical) 20.dp else TOOLBAR_BUTTON_SIZE)
             .testTag("toolbar_drag_handle")
             .pointerInput(Unit) {
                 detectDragGestures(
@@ -116,7 +117,8 @@ fun ToolbarDragHandle(
         Icon(
             imageVector = Icons.Default.DragIndicator,
             contentDescription = stringResource(R.string.move_toolbar),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp)
         )
     }
 }
