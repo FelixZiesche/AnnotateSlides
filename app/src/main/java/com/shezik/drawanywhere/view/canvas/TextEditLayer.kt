@@ -107,6 +107,55 @@ class TextEditLayer(
         addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> positionButtons() }
     }
 
+    // Hold the box being typed (without moving) to pick it up and drag it.
+    private var holdDragging = false
+    private var holdDownX = 0f
+    private var holdDownY = 0f
+    private var holdLastX = 0f
+    private var holdLastY = 0f
+    private val holdSlop = 8 * density
+    private val pickUp = Runnable {
+        holdDragging = true
+        editText.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+        // Stop the EditText's own long-press handling (text selection)
+        val now = android.os.SystemClock.uptimeMillis()
+        val cancel = android.view.MotionEvent.obtain(now, now, android.view.MotionEvent.ACTION_CANCEL, 0f, 0f, 0)
+        editText.onTouchEvent(cancel)
+        cancel.recycle()
+    }
+
+    init {
+        editText.setOnTouchListener { _, e ->
+            when (e.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    holdDragging = false
+                    holdDownX = e.rawX; holdDownY = e.rawY
+                    holdLastX = e.rawX; holdLastY = e.rawY
+                    editText.postDelayed(pickUp, com.shezik.drawanywhere.DrawViewModel.TEXT_HOLD_MS)
+                    false
+                }
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    if (holdDragging) {
+                        viewModel.moveEditingText(e.rawX - holdLastX, e.rawY - holdLastY)
+                        holdLastX = e.rawX; holdLastY = e.rawY
+                        true
+                    } else {
+                        if (Math.hypot((e.rawX - holdDownX).toDouble(), (e.rawY - holdDownY).toDouble()) > holdSlop)
+                            editText.removeCallbacks(pickUp)
+                        false
+                    }
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    editText.removeCallbacks(pickUp)
+                    val wasDragging = holdDragging
+                    holdDragging = false
+                    wasDragging
+                }
+                else -> holdDragging
+            }
+        }
+    }
+
     private val buttonSize = (40 * density).toInt()
 
     private fun makeButton(iconRes: Int, description: Int, onClick: () -> Unit): ImageButton {
