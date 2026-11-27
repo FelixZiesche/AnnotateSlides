@@ -106,7 +106,6 @@ class DrawViewModel(
         const val TOOLBAR_DIM_DELAY_MS = 3_000L
         const val TOOLBAR_DIM_ALPHA = 0.5f
         const val TOOLBAR_DIM_DURATION_MS = 300L
-        const val TEXT_LONG_PRESS_MS = 600L
         private const val TEXT_DRAG_SLOP_DP = 8f
     }
     private val _uiState = MutableStateFlow(initialUiState)
@@ -140,9 +139,6 @@ class DrawViewModel(
 
     /** Pixels per sp (and per dp) on this screen; installed by the service. */
     var textScale: Float = 1f
-
-    /** Called after a text box was deleted by long press (for haptic feedback). */
-    var onTextDeleted: (() -> Unit)? = null
 
     init {
 
@@ -351,7 +347,6 @@ class DrawViewModel(
     }
 
     private var textGesture: TextGesture? = null
-    private var longPressJob: Job? = null
 
     private fun currentZoom(): Float = viewport.value.zoom.takeIf { it > 0f } ?: 1f
 
@@ -362,17 +357,6 @@ class DrawViewModel(
         val hit = textHitTest(point)?.takeIf { it.id != editingId }
         val gesture = TextGesture(point, hit)
         textGesture = gesture
-        longPressJob?.cancel()
-        if (hit != null) {
-            longPressJob = viewModelScope.launch {
-                delay(TEXT_LONG_PRESS_MS)
-                if (textGesture === gesture && !gesture.moved) {
-                    gesture.consumed = true
-                    controller.commitTextChange(hit, null)
-                    onTextDeleted?.invoke()
-                }
-            }
-        }
     }
 
     private fun moveTextGesture(g: TextGesture, point: Offset) {
@@ -382,7 +366,6 @@ class DrawViewModel(
             val slop = TEXT_DRAG_SLOP_DP * textScale / currentZoom()
             if ((point - g.down).getDistance() <= slop) return
             g.moved = true
-            longPressJob?.cancel()
         }
         g.hit?.let { hit ->
             controller.previewText(hit.copy(x = hit.x + point.x - g.down.x, y = hit.y + point.y - g.down.y))
@@ -390,7 +373,6 @@ class DrawViewModel(
     }
 
     private fun endTextGesture(g: TextGesture) {
-        longPressJob?.cancel()
         textGesture = null
         if (g.consumed) return
         val hit = g.hit
@@ -414,7 +396,6 @@ class DrawViewModel(
     /** Abort a running touch gesture on a text box (e.g. a second finger came down). */
     fun cancelTextGesture() {
         val g = textGesture ?: return
-        longPressJob?.cancel()
         textGesture = null
         if (g.moved && !g.consumed) g.hit?.let { controller.previewText(it) }
     }
@@ -465,6 +446,14 @@ class DrawViewModel(
             st.original != null && controller.commitTextChange(st.original, null)
         } else {
             controller.commitTextChange(st.original, draft)
+        }
+    }
+
+    /** Move grip next to the edit box: shift the box being edited by a screen-pixel delta. */
+    fun moveEditingText(dxPx: Float, dyPx: Float) {
+        val zoom = currentZoom()
+        _textEdit.update { st ->
+            st?.copy(draft = st.draft.copy(x = st.draft.x + dxPx / zoom, y = st.draft.y + dyPx / zoom))
         }
     }
 
